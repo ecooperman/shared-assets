@@ -38,6 +38,28 @@ genuinely specific to that app - anything shared belongs here instead. If
 you find yourself copy-pasting a CSS rule or a JS helper into a second app,
 that's the signal to move it here instead.
 
+## Cloudflare Access: deliberately public (Bypass)
+
+Unlike every other hostname in the fleet, `static.evancooperman.com` is
+carved out of the wildcard Access application with its own `Bypass`
+policy - it loads with no login. This is intentional, not an oversight:
+
+- It serves nothing sensitive - just CSS/JS, no user data, no API.
+- Even under the wildcard Access app, Access issues a separate
+  per-hostname session cookie. Nothing in normal app usage ever causes a
+  browser to visit `static.evancooperman.com` directly, so gating it
+  behind login meant a brand-new device/browser's first visit to *any*
+  app would silently fail to load the shared theme (looked like a broken
+  page, wasn't) until someone happened to visit this hostname on its own
+  and log in - confirmed on 2026-08-17 (mobile Safari, private-window
+  cookie isolation made it easy to reproduce).
+
+Don't add an `Allow`/login requirement back to this hostname without
+solving that cookie-dependency problem some other way first. See the
+"Cloudflare Access" step in the root `DEPLOYMENT.md` for the full
+reasoning and how the same pattern is used for the public
+`resume.evancooperman.com` page.
+
 ## Local dev
 
 Consuming apps point at the production hostname even when developed
