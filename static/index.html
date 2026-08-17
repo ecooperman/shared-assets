@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>shared-assets</title>
+  <link rel="stylesheet" href="theme.css" />
+</head>
+<body>
+  <header class="app-header">
+    <h1>shared-assets</h1>
+  </header>
+
+  <main>
+    <p>
+      This isn't an app - it's the shared look-and-feel host for every app
+      under <code>evancooperman.com</code>. Every app links to:
+    </p>
+    <ul>
+      <li><a href="theme.css">theme.css</a> - the shared design tokens (colors,
+        spacing) and component styles (accordion cards, add-toggle forms,
+        message toasts, app-nav, buttons, forms).</li>
+      <li><a href="theme.js">theme.js</a> - the shared DOM/UI helpers
+        (<code>el</code>, <code>showMessage</code>, <code>initAccordion</code>),
+        exposed as <code>window.Theme</code>.</li>
+      <li><a href="icons.js">icons.js</a> - the shared inline-SVG icon
+        registry (<code>ICONS</code> + <code>applyIcons()</code>), for
+        <code>&lt;span data-icon="name"&gt;</code> elements.</li>
+    </ul>
+    <p>
+      To change how something looks or behaves across every app at once,
+      edit the file here and redeploy this one service - no other repo
+      needs to change. See <code>README.md</code> in this repo for the full
+      picture, and each consuming app's own <code>static/style.css</code>
+      for what's genuinely app-specific and stays local.
+    </p>
+    <div id="app-version"></div>
+  </main>
+
+  <script src="version.js"></script>
+</body>
+</html>

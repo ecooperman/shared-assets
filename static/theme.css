@@ -1,0 +1,638 @@
+/* Shared look-and-feel for every app under evancooperman.com. Source of
+   truth for anything used by 2+ apps - see README.md for what's here, what
+   stays local to an app, and how to add a new shared component.
+
+   Naming/token vocabulary carried over as-is from trip-planning/static/
+   style.css, since it was already the most evolved/generic version of this
+   pattern in the fleet before this file existed - gifts/social-planning's
+   prefixed class names (.gift-card, .idea-card, ...) were renamed to match
+   this during migration rather than the other way around, so a future app
+   can adopt these classes directly with zero renaming. */
+
+:root {
+  --border: #e3e1db;
+  --text: #2b2b2b;
+  --muted: #6b675f;
+  --muted-bg: #f2f0ea;
+  --bg: #f6f5f2;
+  --accent: #2b6f5c;
+  --accent-bg: #eef1ee;
+  --danger: #c0442f;
+  --danger-bg: #fbe9e7;
+  --success: #1e7a34;
+  --success-bg: #e6f4ea;
+  --warning: #a6690a;
+  --warning-bg: #fff6e5;
+  --nav-height: 56px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.hidden {
+  display: none;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  padding-bottom: calc(var(--nav-height) + env(safe-area-inset-bottom, 0));
+}
+
+.app-header {
+  padding: 24px 32px 8px;
+}
+
+.app-header h1 {
+  margin: 0;
+  font-size: 24px;
+}
+
+.app-header .subtitle {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+main {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 16px 32px 64px;
+}
+
+/* Wider variant for content that needs the room (e.g. horizontally
+   scrolling day columns) - opt in per page with `<main class="wide">`. */
+main.wide {
+  max-width: 1100px;
+}
+
+h2 {
+  font-size: 16px;
+  margin: 0 0 12px;
+}
+
+h3 {
+  font-size: 14px;
+  margin: 0 0 10px;
+}
+
+a {
+  color: var(--accent);
+}
+
+/* --- app navigation: fixed bottom tab bar on mobile, plain top row once
+   there's enough width --- */
+
+.app-nav {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  min-height: var(--nav-height);
+  background: #fff;
+  border-top: 1px solid var(--border);
+  padding-bottom: env(safe-area-inset-bottom, 0);
+  z-index: 50;
+}
+
+.app-nav-link {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 8px 4px 6px;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* .app-nav-link is also used on the <button> refresh action - undo the
+   generic `button {...}` reset below so it matches the plain <a> nav items
+   instead of looking like a black rounded action button. */
+button.app-nav-link {
+  cursor: pointer;
+  border: none;
+  background: none;
+  border-radius: 0;
+  font-family: inherit;
+}
+
+.app-nav-icon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.app-nav-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* Same idea as .app-nav-icon, sized down for inline use inside a button/link
+   label rather than the nav bar. */
+.btn-icon {
+  display: inline-flex;
+  vertical-align: -3px;
+}
+
+.btn-icon svg {
+  width: 14px;
+  height: 14px;
+}
+
+.app-nav-link.active {
+  color: var(--accent);
+}
+
+@media (min-width: 640px) {
+  body {
+    padding-bottom: 0;
+  }
+
+  .app-nav {
+    position: static;
+    min-height: 0;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: #fff;
+    padding: 6px;
+    margin: 16px 32px 0;
+    justify-content: flex-start;
+    gap: 4px;
+    max-width: 720px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .app-nav-link {
+    flex: none;
+    flex-direction: row;
+    gap: 6px;
+    padding: 6px 12px;
+    font-size: 13px;
+    border-radius: 6px;
+  }
+
+  .app-nav-link.active {
+    background: var(--accent-bg);
+  }
+}
+
+/* Plain in-flow text, not position:fixed - it's the last thing inside
+   <main> on every page, so it only comes into view once you've actually
+   scrolled to the bottom of the content. Pairs with static/version.js on
+   each app (not this one - each app reports its own git SHA). */
+#app-version {
+  text-align: right;
+  margin-top: 24px;
+  font-size: 10px;
+  color: var(--muted);
+  opacity: 0.6;
+}
+
+/* --- forms --- */
+
+.field {
+  margin-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.field-row {
+  display: flex;
+  gap: 16px;
+}
+
+.field-row .field {
+  flex: 1;
+}
+
+label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.required {
+  color: var(--danger);
+}
+
+input,
+textarea,
+select,
+button {
+  font-family: inherit;
+}
+
+button {
+  font-size: 14px;
+}
+
+input[type="text"],
+input[type="url"],
+input[type="email"],
+input[type="date"],
+input[type="number"],
+textarea,
+select {
+  /* 16px minimum keeps iOS Safari from auto-zooming the page on focus */
+  font-size: 16px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: #fff;
+  width: 100%;
+}
+
+textarea {
+  resize: vertical;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 14px;
+  font-weight: 600;
+}
+
+label.checkbox-label {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  text-transform: none;
+  font-size: 14px;
+  color: var(--text);
+  font-weight: 500;
+}
+
+label.checkbox-label input {
+  width: auto;
+}
+
+/* --- feedback bar: give the message element id="page-message" (or use it
+   as a class on any element) and drive it with Theme.showMessage() --- */
+
+.page-message {
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+
+.page-message.success {
+  background: var(--success-bg);
+  color: var(--success);
+}
+
+.page-message.error {
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+
+.page-message.hidden {
+  display: none;
+}
+
+/* --- "+ Add ___" toggle button + card, collapsed by default --- */
+
+.add-toggle {
+  display: block;
+  width: 100%;
+  background: var(--text);
+  color: #fff;
+  padding: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+.add-card {
+  border-left: 4px solid var(--accent);
+  background: #fff;
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.add-card.hidden {
+  display: none;
+}
+
+/* --- list section header + count --- */
+
+.list-header {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.list-count {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.item-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.empty-state {
+  color: var(--muted);
+  font-style: italic;
+}
+
+/* --- accordion cards: a single-line summary row that's the entire
+   footprint of the card until expanded. Wire the click-to-toggle behavior
+   with Theme.initAccordion() (theme.js) rather than reimplementing it. --- */
+
+.item-card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.item-card.archived,
+.item-card.done {
+  opacity: 0.75;
+}
+
+.item-card.done .item-summary-title {
+  text-decoration: line-through;
+  color: var(--muted);
+}
+
+/* Checkbox at the front of a summary row - lets you check something off
+   without expanding the card. stopPropagation on click keeps it from also
+   toggling expand/collapse (see the click handler that calls
+   Theme.initAccordion). */
+.item-summary-done-toggle {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.item-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 14px 16px;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.item-summary-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+  font-size: 15px;
+}
+
+/* Small icon-only link inline in a summary row (e.g. jump straight to a
+   detail page without expanding the card). */
+.item-summary-icon-link {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  margin: -8px 0;
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.item-summary-icon-link:hover {
+  color: var(--accent);
+}
+
+.item-chevron {
+  flex-shrink: 0;
+  color: var(--muted);
+  transition: transform 0.15s ease;
+}
+
+.item-card.expanded .item-chevron {
+  transform: rotate(90deg);
+}
+
+.item-details.hidden {
+  display: none;
+}
+
+.item-details-inner {
+  padding: 4px 16px 16px;
+  border-top: 1px solid var(--border);
+  padding-top: 14px;
+}
+
+.item-fields {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.item-actions {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.item-actions button {
+  padding: 10px;
+}
+
+/* --- summary-row badges: small rounded pills (a date, a domain, a tag) --- */
+
+.item-badge {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 10px;
+  white-space: nowrap;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.item-badge-date {
+  color: var(--success);
+  background: var(--success-bg);
+}
+
+.item-badge-accent {
+  color: var(--accent);
+  background: var(--accent-bg);
+}
+
+.item-badge-muted {
+  color: var(--muted);
+  background: var(--muted-bg);
+  font-weight: 500;
+}
+
+.item-badge-domain {
+  color: var(--muted);
+  background: var(--muted-bg);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.item-badge-domain:hover {
+  text-decoration: underline;
+}
+
+/* --- danger/save/cancel/secondary button colors, shared everywhere --- */
+
+.danger-btn {
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+
+.save-btn {
+  background: var(--accent);
+  color: #fff;
+}
+
+.cancel-btn {
+  background: #eee;
+  color: #4a473f;
+}
+
+.secondary-btn {
+  background: var(--muted-bg);
+  color: var(--text);
+}
+
+/* These classes are also used on <a> tags styled to look like buttons - the
+   base `button {...}` reset above only targets real <button> elements, so
+   anchors need it repeated. */
+a.danger-btn,
+a.save-btn,
+a.cancel-btn,
+a.secondary-btn {
+  display: inline-block;
+  border-radius: 6px;
+  padding: 8px 14px;
+  font-weight: 600;
+  font-size: 14px;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+/* --- OG-tag / link preview fetch (gifts' gift-scrape-section, trip-
+   planning's activity/stay scrape section - identical shape in both) --- */
+
+.scrape-section {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.scrape-btn {
+  background: var(--accent-bg);
+  color: var(--accent);
+  font-size: 12px;
+  padding: 6px 10px;
+  white-space: nowrap;
+}
+
+.scrape-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.scrape-preview {
+  display: flex;
+  gap: 12px;
+  margin-top: 10px;
+  padding: 10px;
+  background: var(--bg);
+  border-radius: 8px;
+}
+
+.scrape-image {
+  width: 72px;
+  height: 72px;
+  object-fit: cover;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.scrape-title {
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.scrape-description {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.scrape-note {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.scrape-error {
+  color: var(--danger);
+}
+
+@media (min-width: 640px) {
+  .item-fields {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .item-actions {
+    flex-direction: row;
+    justify-content: flex-end;
+  }
+
+  .item-actions button {
+    padding: 8px 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .app-header {
+    padding: 16px 16px 8px;
+  }
+
+  main {
+    padding: 12px 16px 48px;
+  }
+
+  .field-row {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  button {
+    padding: 10px 14px;
+  }
+}
