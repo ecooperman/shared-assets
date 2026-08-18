@@ -19,10 +19,13 @@
     <ul>
       <li><a href="theme.css">theme.css</a> - the shared design tokens (colors,
         spacing) and component styles (accordion cards, add-toggle forms,
-        message toasts, app-nav, buttons, forms).</li>
-      <li><a href="theme.js">theme.js</a> - the shared DOM/UI helpers
-        (<code>el</code>, <code>showMessage</code>, <code>initAccordion</code>),
-        exposed as <code>window.Theme</code>.</li>
+        message toasts, modals, app-nav, buttons, forms).</li>
+      <li><a href="theme.js">theme.js</a> - shared DOM/fetch/date/UI helpers
+        (<code>el</code>, <code>showMessage</code>, <code>fetchJSON</code>,
+        <code>domainFromUrl</code>, <code>toISODate</code>,
+        <code>wireAccordionToggle</code>, <code>openModal</code>/
+        <code>closeModal</code>, <code>buildNav</code>, ...), exposed as
+        <code>window.Global</code>. See README.md for the full list.</li>
       <li><a href="icons.js">icons.js</a> - the shared inline-SVG icon
         registry (<code>ICONS</code> + <code>applyIcons()</code>), for
         <code>&lt;span data-icon="name"&gt;</code> elements.</li>

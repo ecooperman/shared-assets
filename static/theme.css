@@ -281,7 +281,7 @@ label.checkbox-label input {
 }
 
 /* --- feedback bar: give the message element id="page-message" (or use it
-   as a class on any element) and drive it with Theme.showMessage() --- */
+   as a class on any element) and drive it with Global.showMessage() --- */
 
 .page-message {
   padding: 10px 14px;
@@ -355,7 +355,7 @@ label.checkbox-label input {
 
 /* --- accordion cards: a single-line summary row that's the entire
    footprint of the card until expanded. Wire the click-to-toggle behavior
-   with Theme.initAccordion() (theme.js) rather than reimplementing it. --- */
+   with Global.wireAccordionToggle() (theme.js) rather than reimplementing it. --- */
 
 .item-card {
   background: #fff;
@@ -377,7 +377,7 @@ label.checkbox-label input {
 /* Checkbox at the front of a summary row - lets you check something off
    without expanding the card. stopPropagation on click keeps it from also
    toggling expand/collapse (see the click handler that calls
-   Theme.initAccordion). */
+   Global.wireAccordionToggle). */
 .item-summary-done-toggle {
   flex-shrink: 0;
   width: 18px;
@@ -601,6 +601,65 @@ a.secondary-btn {
 
 .scrape-error {
   color: var(--danger);
+}
+
+/* --- modals: a centered box over a dark backdrop. Dismiss wiring
+   (Escape key, backdrop click) is in theme.js - just add
+   .modal-overlay.hidden by default and Global.openModal(id)/
+   Global.closeModal(id) or a plain classList.toggle("hidden") to show it.
+   Promoted from time-management, the one app that had this pattern. --- */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.modal-overlay.hidden {
+  display: none;
+}
+
+.modal {
+  background: #fff;
+  border-radius: 10px;
+  padding: 20px;
+  width: 360px;
+  max-width: 90vw;
+  position: relative;
+}
+
+.modal-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  border: none;
+  background: none;
+  font-size: 18px;
+  padding: 0 6px;
+}
+
+.modal .row {
+  display: flex;
+  gap: 12px;
+}
+
+.modal .row > label {
+  flex: 1;
+}
+
+.modal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.modal-actions button.danger {
+  color: var(--danger);
+  border-color: var(--danger);
 }
 
 @media (min-width: 640px) {
