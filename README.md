@@ -28,6 +28,20 @@ theme.js also wires two **global, automatic** behaviors that need no per-app set
 
 **Before adding a new function here**, check for a same-named function already local to an app - a name collision with *different* behavior is a real risk, not just a rename. Confirmed one during this pass: time-management's own `toISODate(date)` takes a `Date` object and formats it to a string (calendar-grid logic) - the *opposite* direction of `Global.toISODate(isoString)` above, which slices an ISO string. Left local, not shared, specifically because of that collision.
 
+## Run it
+
+```bash
+cd shared-assets
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+python -m app.main
+```
+
+Then open http://127.0.0.1:8070 (host/port are set in `app/config.py`). No
+database, no `alembic upgrade head` - this app is just three static files
+behind a `no-store` cache header, see the table above.
+
 ## Why this exists
 
 gifts, social-planning, time-management, and trip-planning independently
