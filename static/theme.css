@@ -662,6 +662,117 @@ a.secondary-btn {
   border-color: var(--danger);
 }
 
+/* --- multiselect dropdown: a button that opens a checklist panel. See
+   Global.buildMultiSelect in theme.js - build the whole thing through that
+   rather than hand-assembling these classes, the open/close/dismiss wiring
+   lives there. --- */
+
+.multiselect {
+  position: relative;
+  display: inline-block;
+}
+
+.multiselect-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 140px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: #fff;
+  font: inherit;
+  font-size: 14px;
+  color: inherit;
+  cursor: pointer;
+}
+
+.multiselect-trigger-arrow {
+  flex-shrink: 0;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.multiselect-panel {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 60;
+  min-width: 220px;
+  max-height: 280px;
+  overflow-y: auto;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  padding: 6px;
+}
+
+.multiselect-panel.hidden {
+  display: none;
+}
+
+.multiselect-option {
+  /* Resets the global `label { text-transform: uppercase; ... }` field-
+     label style (meant for form field labels like "Name"/"Cost") - this
+     is one of these visually, an option row, not a field label. */
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--text);
+}
+
+.multiselect-option:hover {
+  background: var(--muted-bg);
+}
+
+.multiselect-option input[type="checkbox"] {
+  flex-shrink: 0;
+  accent-color: var(--accent);
+}
+
+.multiselect-option-swatch {
+  flex-shrink: 0;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--swatch-color, var(--muted));
+}
+
+.multiselect-option-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.multiselect-panel-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 4px;
+  padding-top: 6px;
+  border-top: 1px solid var(--border);
+}
+
+.multiselect-clear {
+  padding: 4px 6px;
+  border: none;
+  background: none;
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
 @media (min-width: 640px) {
   .item-fields {
     grid-template-columns: 1fr 1fr;

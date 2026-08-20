@@ -7,7 +7,7 @@ no database and does nothing but serve three static files:
 
 | File | What it is |
 |---|---|
-| `static/theme.css` | Design tokens (`:root` colors/spacing) and shared component styles - accordion cards, add-toggle forms, message toasts, `.app-nav`, buttons, forms, modals. |
+| `static/theme.css` | Design tokens (`:root` colors/spacing) and shared component styles - accordion cards, add-toggle forms, message toasts, `.app-nav`, buttons, forms, modals, multiselect dropdowns. |
 | `static/theme.js` | Shared DOM/fetch/date/UI helpers, exposed as `window.Global` (see table below). |
 | `static/icons.js` | Shared inline-SVG icon registry (`ICONS` + `applyIcons()`) for `<span data-icon="name">` elements. |
 
@@ -23,8 +23,9 @@ no database and does nothing but serve three static files:
 | `Global.toISODate(isoDateTime)` / `Global.dateInputToISO(value)` / `Global.formatDateBadge(isoDateTime)` | Plain-date (no time-of-day) helpers duplicated in gifts/social-planning; trip-planning's richer time-of-day-aware helpers stayed local since nothing else needs them. |
 | `Global.openModal(id)` / `Global.closeModal(id)` | Convenience wrappers around the `.hidden` class toggle; not required - the automatic Escape-key/backdrop-click dismiss wiring (below) works on any `.modal-overlay` regardless of how it was opened. |
 | `Global.buildNav(items, mountId?)` | Renders `.app-nav` into `<div id="app-nav-mount">` from `[{href, icon, label, active}]` (or `{icon, label, onclick}` for an action button like Refresh) - generalized from trip-planning's `nav.js`, the only app that had this instead of hand-written nav HTML per page. |
+| `Global.buildMultiSelect({options, selected?, placeholder?, onChange})` | A trigger button that opens a checklist panel - for filtering a list by an open-ended set of values (categories, tags, ...) where a `<select>` only picks one at a time and a row of toggle chips stops scaling past a handful. `options` is `[{value, label, color?}]` (`color` renders a small swatch, e.g. a category's color); `onChange(selectedValues)` fires on every check/uncheck/Clear with the full current selection. Returns the `.multiselect` element to insert wherever - promoted from trip-planning's agenda category filter, its first use. |
 
-theme.js also wires two **global, automatic** behaviors that need no per-app setup: pressing Escape or clicking a `.modal-overlay`'s backdrop closes any open modal (`theme.css`'s `.modal-overlay`/`.modal` component, promoted from time-management - the one app that had a modal pattern, extracted as reusable even though nothing else uses it yet).
+theme.js also wires two **global, automatic** behaviors that need no per-app setup: pressing Escape or clicking a `.modal-overlay`'s backdrop closes any open modal (`theme.css`'s `.modal-overlay`/`.modal` component, promoted from time-management - the one app that had a modal pattern, extracted as reusable even though nothing else uses it yet); the same goes for a `.multiselect-panel` - Escape or an outside click closes it, and opening one closes any other that's already open.
 
 **Before adding a new function here**, check for a same-named function already local to an app - a name collision with *different* behavior is a real risk, not just a rename. Confirmed one during this pass: time-management's own `toISODate(date)` takes a `Date` object and formats it to a string (calendar-grid logic) - the *opposite* direction of `Global.toISODate(isoString)` above, which slices an ISO string. Left local, not shared, specifically because of that collision.
 

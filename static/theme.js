@@ -180,6 +180,108 @@
     if (typeof applyIcons === "function") applyIcons(nav);
   }
 
+  // --- multiselect dropdown (theme.css's .multiselect/.multiselect-trigger/
+  // .multiselect-panel) - a button that opens a checklist panel, for
+  // filtering a list by an open-ended set of options (categories, tags,
+  // ...) where a plain <select> only lets you pick one at a time and a row
+  // of toggle chips stops scaling once there are more than a handful.
+  // Promoted from trip-planning's category filter (its first use), meant
+  // to be reused by any app filtering a list this way.
+  //
+  // options: [{value, label, color}] - color is optional, renders a small
+  // swatch before the label (e.g. a category's color) when given.
+  // selected: initial array of selected values (compared as strings).
+  // onChange(selectedValues) fires on every check/uncheck/Clear, with the
+  // full current array of selected values (strings) - the caller owns
+  // filtering its own list from that, this widget only owns the UI.
+  function buildMultiSelect({ options, selected = [], placeholder = "All", onChange }) {
+    let current = new Set(selected.map(String));
+
+    const trigger = el("button", { type: "button", class: "multiselect-trigger", "aria-haspopup": "listbox", "aria-expanded": "false" }, [
+      el("span", { class: "multiselect-trigger-label" }),
+      el("span", { class: "multiselect-trigger-arrow", "aria-hidden": "true", text: "▾" }),
+    ]);
+    const triggerLabel = trigger.querySelector(".multiselect-trigger-label");
+
+    function refreshTriggerLabel() {
+      if (current.size === 0) {
+        triggerLabel.textContent = placeholder;
+      } else if (current.size === 1) {
+        const opt = options.find((o) => String(o.value) === [...current][0]);
+        triggerLabel.textContent = opt ? opt.label : `1 selected`;
+      } else {
+        triggerLabel.textContent = `${current.size} selected`;
+      }
+    }
+    refreshTriggerLabel();
+
+    const optionRows = options.map((opt) => {
+      const value = String(opt.value);
+      const checkbox = el("input", { type: "checkbox" });
+      checkbox.checked = current.has(value);
+      checkbox.addEventListener("change", () => {
+        if (checkbox.checked) current.add(value);
+        else current.delete(value);
+        refreshTriggerLabel();
+        if (onChange) onChange([...current]);
+      });
+      const children = [checkbox];
+      if (opt.color) {
+        const swatch = el("span", { class: "multiselect-option-swatch", "aria-hidden": "true" });
+        swatch.style.setProperty("--swatch-color", opt.color);
+        children.push(swatch);
+      }
+      children.push(el("span", { class: "multiselect-option-label", text: opt.label }));
+      return el("label", { class: "multiselect-option" }, children);
+    });
+
+    const clearBtn = el("button", {
+      type: "button",
+      class: "multiselect-clear",
+      text: "Clear",
+      onclick: () => {
+        current = new Set();
+        for (const row of optionRows) row.querySelector("input").checked = false;
+        refreshTriggerLabel();
+        if (onChange) onChange([]);
+      },
+    });
+
+    const panel = el("div", { class: "multiselect-panel hidden", role: "listbox" }, [...optionRows, el("div", { class: "multiselect-panel-actions" }, [clearBtn])]);
+
+    trigger.addEventListener("click", () => {
+      const opening = panel.classList.contains("hidden");
+      // Only one panel open at a time - close any other open multiselect
+      // before opening this one (same idea as the modal backdrop dismiss).
+      document.querySelectorAll(".multiselect-panel:not(.hidden)").forEach((p) => {
+        p.classList.add("hidden");
+        p.previousElementSibling?.setAttribute("aria-expanded", "false");
+      });
+      panel.classList.toggle("hidden", !opening);
+      trigger.setAttribute("aria-expanded", String(opening));
+    });
+
+    return el("div", { class: "multiselect" }, [trigger, panel]);
+  }
+
+  document.addEventListener("click", (e) => {
+    document.querySelectorAll(".multiselect-panel:not(.hidden)").forEach((panel) => {
+      const root = panel.closest(".multiselect");
+      if (root && !root.contains(e.target)) {
+        panel.classList.add("hidden");
+        panel.previousElementSibling?.setAttribute("aria-expanded", "false");
+      }
+    });
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape") return;
+    document.querySelectorAll(".multiselect-panel:not(.hidden)").forEach((panel) => {
+      panel.classList.add("hidden");
+      panel.previousElementSibling?.setAttribute("aria-expanded", "false");
+    });
+  });
+
   window.Global = {
     el,
     showMessage,
@@ -192,5 +294,6 @@
     openModal,
     closeModal,
     buildNav,
+    buildMultiSelect,
   };
 })();
