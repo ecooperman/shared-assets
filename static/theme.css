@@ -700,7 +700,12 @@ a.secondary-btn {
   left: 0;
   z-index: 60;
   min-width: 220px;
-  max-height: 280px;
+  /* Was a flat 280px (only ~3-4 rows visible before scrolling) - scales
+     with the actual viewport instead, so a tall screen shows far more of
+     a long list at once. 160px reserves roughly the trigger's own
+     position plus a little breathing room at the bottom of the screen,
+     not just tight against the edge. */
+  max-height: calc(100vh - 160px);
   overflow-y: auto;
   background: #fff;
   border: 1px solid var(--border);
