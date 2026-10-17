@@ -29,18 +29,44 @@
 
   // Toast/feedback bar helper. Looks up an element by id (default
   // "page-message", matching theme.css's .page-message) unless an element
-  // is passed directly. `kind` is "success" or "error"; auto-hides after
-  // 4s the same way every app's local copy of this already did.
+  // is passed directly. `kind` is "success" or "error".
+  //
+  // "success" (and any other non-"error" kind) auto-hides after 4s, same
+  // as every app's local copy of this originally did - a quick "saved"
+  // confirmation doesn't need to be read carefully or dismissed by hand.
+  //
+  // "error" never auto-hides - it gets a dismiss (x) button instead and
+  // stays up until the user closes it or the next showMessage call
+  // replaces it. An error is often the one piece of information worth
+  // reading closely (which of 10 imports failed and why, a validation
+  // message explaining what to fix) - a 4s timer risked it vanishing
+  // before it had been read at all.
   function showMessage(text, kind, target = "page-message") {
-    const el = typeof target === "string" ? document.getElementById(target) : target;
-    if (!el) return;
-    el.textContent = text;
-    el.className = "page-message " + kind;
-    clearTimeout(showMessage._timers?.get(el));
-    (showMessage._timers ||= new WeakMap()).set(
-      el,
-      setTimeout(() => el.classList.add("hidden"), 4000)
-    );
+    const target_el = typeof target === "string" ? document.getElementById(target) : target;
+    if (!target_el) return;
+    clearTimeout(showMessage._timers?.get(target_el));
+    target_el.innerHTML = "";
+    target_el.className = "page-message " + kind;
+
+    const textEl = document.createElement("span");
+    textEl.className = "page-message-text";
+    textEl.textContent = text;
+    target_el.appendChild(textEl);
+
+    if (kind === "error") {
+      const dismissBtn = document.createElement("button");
+      dismissBtn.type = "button";
+      dismissBtn.className = "page-message-dismiss";
+      dismissBtn.setAttribute("aria-label", "Dismiss");
+      dismissBtn.textContent = "×";
+      dismissBtn.addEventListener("click", () => target_el.classList.add("hidden"));
+      target_el.appendChild(dismissBtn);
+    } else {
+      (showMessage._timers ||= new WeakMap()).set(
+        target_el,
+        setTimeout(() => target_el.classList.add("hidden"), 4000)
+      );
+    }
   }
 
   // Wires the expand/collapse behavior for one accordion card (theme.css's
