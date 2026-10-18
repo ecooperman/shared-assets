@@ -308,6 +308,59 @@
     });
   });
 
+  // --- loading states (theme.css's .is-loading/.spinner/.loading-inline) ---
+  //
+  // Any section of a page that waits on async data should show a spinner so
+  // it's obvious something is happening. Easiest form:
+  //
+  //   const rows = await Global.withLoading(listEl, Global.fetchJSON(url));
+  //
+  // which shows the spinner on listEl, waits, and always clears it (even if
+  // the fetch throws). showLoading/hideLoading are the manual pair for
+  // flows that don't fit one promise.
+  //
+  // An empty section (first load) shows the spinner straight away; one that
+  // already has content (a refresh) is only dimmed + spinnered if the wait
+  // passes 250ms, so quick refreshes don't flicker. Render code can clear
+  // the section itself - hideLoading() still must run to drop the state.
+  const _loadTimers = new WeakMap();
+  const _loadCounts = new WeakMap();
+
+  function showLoading(target) {
+    if (!target) return;
+    clearTimeout(_loadTimers.get(target));
+    const apply = () => {
+      target.classList.add("is-loading");
+      if (!target.querySelector(":scope > .spinner")) {
+        target.appendChild(el("div", { class: "spinner", role: "status", "aria-label": "Loading" }));
+      }
+    };
+    if (target.firstElementChild) _loadTimers.set(target, setTimeout(apply, 250));
+    else apply();
+  }
+
+  function hideLoading(target) {
+    if (!target) return;
+    clearTimeout(_loadTimers.get(target));
+    target.classList.remove("is-loading");
+    target.querySelectorAll(":scope > .spinner").forEach((n) => n.remove());
+  }
+
+  // Wraps a promise (or a function returning one) in show/hideLoading.
+  // Counts overlapping calls per target so a slow earlier request finishing
+  // first doesn't hide the spinner while a newer one is still in flight.
+  async function withLoading(target, work) {
+    _loadCounts.set(target, (_loadCounts.get(target) || 0) + 1);
+    showLoading(target);
+    try {
+      return await (typeof work === "function" ? work() : work);
+    } finally {
+      const n = (_loadCounts.get(target) || 1) - 1;
+      _loadCounts.set(target, n);
+      if (n <= 0) hideLoading(target);
+    }
+  }
+
   window.Global = {
     el,
     showMessage,
@@ -321,5 +374,8 @@
     closeModal,
     buildNav,
     buildMultiSelect,
+    showLoading,
+    hideLoading,
+    withLoading,
   };
 })();

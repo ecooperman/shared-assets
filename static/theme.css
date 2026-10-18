@@ -690,6 +690,64 @@ a.secondary-btn {
   border-color: var(--danger);
 }
 
+/* --- loading states: Global.showLoading/hideLoading/withLoading (theme.js).
+   .is-loading goes on the section whose data is on the way; the spinner is
+   appended inside it. .loading-inline is for a one-line text placeholder
+   ("Loading funds...") that gets a small spinner in front. Promoted from
+   the finances app. --- */
+
+.is-loading {
+  position: relative;
+  min-height: 72px;
+}
+
+.is-loading > :not(.spinner) {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+.spinner {
+  position: absolute;
+  top: 22px;
+  left: 50%;
+  width: 26px;
+  height: 26px;
+  margin-left: -13px;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  z-index: 2;
+}
+
+.loading-inline {
+  color: var(--muted);
+}
+
+.loading-inline::before {
+  content: "";
+  display: inline-block;
+  width: 11px;
+  height: 11px;
+  margin-right: 7px;
+  vertical-align: -1px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner,
+  .loading-inline::before {
+    animation-duration: 2.4s;
+  }
+}
+
 /* --- multiselect dropdown: a button that opens a checklist panel. See
    Global.buildMultiSelect in theme.js - build the whole thing through that
    rather than hand-assembling these classes, the open/close/dismiss wiring
