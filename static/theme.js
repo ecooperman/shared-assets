@@ -361,6 +361,168 @@
     }
   }
 
+  // --- click-to-edit fields (theme.css's .inline-edit*) ---
+  //
+  // A value that reads as plain text until you click it, then becomes an
+  // input; leaving the field (or Enter) saves just that field, Esc cancels.
+  //
+  //   const field = Global.inlineEdit({
+  //     type: "text",                    // text | url | date | textarea | select
+  //     value: item.name,                // always a string ("" = empty)
+  //     required: true,                  // clearing it reverts instead of saving
+  //     requiredMessage: "Name is required.",
+  //     placeholder: "Click to add",     // shown (muted) while empty
+  //     options: [{ value, label }],     // select only
+  //     format: (v) => prettyDate(v),    // optional display text for a value
+  //     onSave: async (v) => { ...PATCH...; return savedValueAsString; },
+  //   });
+  //
+  // onSave persists the new value and resolves with the value to show (so
+  // the server can normalize it); if it throws, the error is shown and the
+  // field reverts to what it was. Nothing is sent if the value is unchanged.
+  // Keys: Enter saves (Ctrl/Cmd+Enter in a textarea), Esc cancels, Tab saves
+  // and moves on. A <select> saves as soon as you pick an option.
+  //
+  // Only meant for devices with a mouse: on touch, a tap to edit competes
+  // with scrolling, pops the keyboard on stray taps, and blur-to-save fires
+  // when the keyboard dismisses. Callers check supportsInlineEdit() and keep
+  // their ordinary form (with a Save button) everywhere else.
+  function supportsInlineEdit() {
+    return window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+  }
+
+  function inlineEdit({
+    type = "text",
+    value = "",
+    options = [],
+    placeholder = "Click to add",
+    required = false,
+    requiredMessage = "This field can't be empty.",
+    rows = 2,
+    format,
+    onSave,
+  }) {
+    let current = value == null ? "" : String(value);
+    const root = el("div", { class: "inline-edit" });
+
+    function displayText() {
+      if (type === "select") {
+        const match = options.find((o) => String(o.value) === current);
+        return match ? match.label : "";
+      }
+      if (current === "") return "";
+      return format ? format(current) : current;
+    }
+
+    function render(refocus = false) {
+      // Keep keyboard focus on the field after Enter/Esc; but if focus has
+      // already moved on (Tab, or a click elsewhere), leave it alone.
+      const hadFocus = refocus || root.contains(document.activeElement);
+      const text = displayText();
+      const empty = current === "" || text === "";
+      const display = el("div", {
+        class: "inline-edit-display" + (empty ? " empty" : ""),
+        tabindex: "0",
+        role: "button",
+        text: type === "select" ? text || placeholder : empty ? placeholder : text,
+      });
+      display.addEventListener("click", startEdit);
+      display.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          startEdit();
+        }
+      });
+      root.classList.remove("saving", "editing");
+      root.replaceChildren(display);
+      if (hadFocus) display.focus();
+    }
+
+    function startEdit() {
+      let input;
+      if (type === "select") {
+        input = el(
+          "select",
+          {},
+          options.map((o) => el("option", { value: String(o.value), text: o.label }))
+        );
+      } else if (type === "textarea") {
+        input = el("textarea", { rows: String(rows) });
+      } else {
+        input = el("input", { type });
+      }
+      input.classList.add("inline-edit-input");
+      input.value = current;
+      root.classList.add("editing");
+      root.replaceChildren(input);
+      input.focus();
+      if (input.select && type !== "select" && type !== "date") input.select();
+
+      // `finished` guards the classic bug: Esc removes the input, removal
+      // fires blur, and blur would then save the edit that was just cancelled.
+      let finished = false;
+
+      async function commit() {
+        if (finished) return;
+        finished = true;
+        // Captured now: disabling the input below drops its focus, which
+        // would otherwise look like focus had already moved elsewhere.
+        const refocus = root.contains(document.activeElement);
+        const next = type === "select" || type === "date" ? input.value : input.value.trim();
+        if (required && next === "") {
+          showMessage(requiredMessage, "error");
+          render(refocus);
+          return;
+        }
+        if (next === current) {
+          render(refocus);
+          return;
+        }
+        input.disabled = true;
+        root.classList.add("saving");
+        try {
+          const saved = await onSave(next);
+          current = saved == null ? next : String(saved);
+        } catch (err) {
+          showMessage(err.message || String(err), "error");
+        }
+        render(refocus);
+      }
+
+      function cancel() {
+        if (finished) return;
+        finished = true;
+        render();
+      }
+
+      input.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+          e.preventDefault();
+          e.stopPropagation();
+          cancel();
+        } else if (e.key === "Enter") {
+          if (type === "textarea" && !(e.ctrlKey || e.metaKey)) return; // newline
+          e.preventDefault();
+          commit();
+        }
+      });
+      if (type === "select") {
+        input.addEventListener("change", commit);
+        input.addEventListener("blur", cancel);
+      } else {
+        input.addEventListener("blur", commit);
+      }
+    }
+
+    render();
+    // For callers that learn a field's value changed some other way.
+    root.setValue = (v) => {
+      current = v == null ? "" : String(v);
+      if (!root.classList.contains("editing")) render();
+    };
+    return root;
+  }
+
   window.Global = {
     el,
     showMessage,
@@ -377,5 +539,7 @@
     showLoading,
     hideLoading,
     withLoading,
+    inlineEdit,
+    supportsInlineEdit,
   };
 })();
