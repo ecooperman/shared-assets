@@ -372,6 +372,7 @@
   //     required: true,                  // clearing it reverts instead of saving
   //     requiredMessage: "Name is required.",
   //     placeholder: "Click to add",     // shown (muted) while empty
+  //     className: "my-title",           // extra class(es) on the wrapper, for context-specific sizing
   //     options: [{ value, label }],     // select only
   //     format: (v) => prettyDate(v),    // optional display text for a value
   //     onSave: async (v) => { ...PATCH...; return savedValueAsString; },
@@ -398,12 +399,13 @@
     placeholder = "Click to add",
     required = false,
     requiredMessage = "This field can't be empty.",
+    className = "",
     rows = 2,
     format,
     onSave,
   }) {
     let current = value == null ? "" : String(value);
-    const root = el("div", { class: "inline-edit" });
+    const root = el("div", { class: "inline-edit" + (className ? ` ${className}` : "") });
 
     function displayText() {
       if (type === "select") {
