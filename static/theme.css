@@ -43,6 +43,7 @@ body {
 }
 
 .app-header {
+  position: relative;
   padding: 24px 32px 8px;
 }
 
@@ -55,6 +56,40 @@ body {
   margin: 4px 0 0;
   color: var(--muted);
   font-size: 13px;
+}
+
+/* Signed-in person + Log out, top right of the header (Global.mountUserBadge). */
+.user-badge {
+  position: absolute;
+  top: 10px;
+  right: 32px;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  max-width: calc(100% - 64px);
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.app-header.has-user-badge {
+  padding-top: 38px;
+}
+
+.user-badge-email {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.user-badge-logout {
+  flex-shrink: 0;
+  color: var(--muted);
+  text-decoration: underline;
+}
+
+.user-badge-logout:hover {
+  color: var(--accent);
 }
 
 main {
@@ -882,6 +917,15 @@ a.secondary-btn {
 @media (max-width: 480px) {
   .app-header {
     padding: 16px 16px 8px;
+  }
+
+  .app-header.has-user-badge {
+    padding-top: 34px;
+  }
+
+  .user-badge {
+    right: 16px;
+    max-width: calc(100% - 32px);
   }
 
   main {

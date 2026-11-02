@@ -82,6 +82,23 @@ genuinely specific to that app - anything shared belongs here instead. If
 you find yourself copy-pasting a CSS rule or a JS helper into a second app,
 that's the signal to move it here instead.
 
+## Signed-in user (apps with accounts)
+
+Apps with accounts (see the `fastapi-sqlite-scaffold` skill's `app/auth.py`)
+learn who's signed in from Cloudflare Access and answer `GET /api/me` with
+`{id, email}`. Two helpers in `theme.js` build on that:
+
+- `Global.currentUser()` - fetches `/api/me` once per page; resolves to
+  `{id, email}`, or `null` if the app has no accounts or the call fails.
+- `Global.mountUserBadge()` - puts the email and a **Log out** link
+  (`/cdn-cgi/access/logout`, which ends the Access session for that app) in
+  the top corner of `.app-header` (`.user-badge` in `theme.css`). It does
+  nothing when there's no user. Call it once from the app's `nav.js`, after
+  `buildNav`.
+
+Only call these from pages of apps that actually have `/api/me` - elsewhere
+they just find nothing, but there's no reason to make the request.
+
 ## Cloudflare Access: deliberately public (Bypass)
 
 Unlike every other hostname in the fleet, `static.evancooperman.com` is

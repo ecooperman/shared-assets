@@ -206,6 +206,39 @@
     if (typeof applyIcons === "function") applyIcons(nav);
   }
 
+  // --- who is signed in (apps with accounts) ---
+  // There's no login form: Cloudflare Access signs people in and the app
+  // learns who they are from it (see the scaffold's app/auth.py). An app with
+  // accounts answers GET /api/me with {id, email}; this reads it once per page
+  // and shares the result. Resolves to null if the app has no /api/me or the
+  // call fails, so callers can treat "no user" as "nothing to show".
+  let mePromise = null;
+  function currentUser() {
+    if (!mePromise) {
+      mePromise = fetch("/api/me")
+        .then((res) => (res.ok ? res.json() : null))
+        .catch(() => null);
+    }
+    return mePromise;
+  }
+
+  // The signed-in person's email and a Log out link, in the top corner of the
+  // page header (theme.css's .user-badge). Log out ends their Cloudflare
+  // Access session for this app; the next visit asks them to sign in again.
+  // Does nothing when there's no user. Call once per page, after the DOM exists.
+  async function mountUserBadge(target = document.querySelector(".app-header")) {
+    if (!target) return null;
+    const user = await currentUser();
+    if (!user) return null;
+    const badge = el("div", { class: "user-badge" }, [
+      el("span", { class: "user-badge-email", text: user.email, title: `Signed in as ${user.email}` }),
+      el("a", { class: "user-badge-logout", href: "/cdn-cgi/access/logout", text: "Log out" }),
+    ]);
+    target.appendChild(badge);
+    target.classList.add("has-user-badge"); // makes room for it above the title
+    return badge;
+  }
+
   // --- multiselect dropdown (theme.css's .multiselect/.multiselect-trigger/
   // .multiselect-panel) - a button that opens a checklist panel, for
   // filtering a list by an open-ended set of options (categories, tags,
@@ -543,5 +576,7 @@
     withLoading,
     inlineEdit,
     supportsInlineEdit,
+    currentUser,
+    mountUserBadge,
   };
 })();
