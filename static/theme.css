@@ -292,6 +292,27 @@ textarea {
   resize: vertical;
 }
 
+/* Dropdowns: drop the browser's own arrow (it hugs the border) and draw a
+   small chevron with room around it. The padding on the right keeps long
+   option text from running under it. */
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 34px;
+  background-color: #fff;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none' stroke='%236b675f' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M1.5 1.75 6 6.25l4.5-4.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 12px 8px;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+select:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
 button {
   cursor: pointer;
   border: none;
