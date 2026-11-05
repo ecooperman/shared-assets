@@ -101,19 +101,37 @@
   // strict improvement (a readable message instead of "[object Object]").
   // (Some apps' local copies also attached `err.status = res.status`, but
   // nothing anywhere actually read that field, so it's dropped here.)
+  // Plain words for a failure the server gave no message with (a proxy's
+  // error page, a login redirect...), instead of "/api/x -> 502".
+  function friendlyStatus(status) {
+    if (status === 401 || status === 403) return "You've been signed out or aren't allowed to do that - reload the page and try again.";
+    if (status === 404) return "That couldn't be found - it may have been removed. Reload the page and try again.";
+    if (status === 408 || status === 429) return "Too many requests right now - wait a moment and try again.";
+    if (status >= 500) return "Something went wrong on the server - try again in a moment.";
+    return `That didn't work (error ${status}).`;
+  }
+
   async function fetchJSON(url, options) {
-    const res = await fetch(url, options);
+    let res;
+    try {
+      res = await fetch(url, options);
+    } catch (e) {
+      // fetch only rejects when the request never got an answer.
+      throw new Error("Couldn't reach the server - check your connection and try again. If you were signed out, reload the page.");
+    }
     if (!res.ok) {
-      let detail = `${url} -> ${res.status}`;
+      // Any error response gets a message: the server's own when it sent a
+      // readable one, otherwise plain words for the status.
+      let detail = friendlyStatus(res.status);
       try {
         const body = await res.json();
         if (Array.isArray(body.detail)) {
-          detail = body.detail.map((e) => e.msg || JSON.stringify(e)).join("; ");
-        } else if (body.detail) {
+          detail = body.detail.map((e) => e.msg || JSON.stringify(e)).join("; ") || detail;
+        } else if (typeof body.detail === "string" && body.detail.trim()) {
           detail = body.detail;
         }
       } catch (e) {
-        // ignore, use default detail
+        // not JSON (a proxy's error page, say) - keep the status wording
       }
       throw new Error(detail);
     }
@@ -563,6 +581,7 @@
     showMessage,
     wireAccordionToggle,
     fetchJSON,
+    friendlyStatus,
     domainFromUrl,
     toISODate,
     dateInputToISO,
