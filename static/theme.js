@@ -231,10 +231,14 @@
   // and shares the result. Resolves to null if the app has no /api/me or the
   // call fails, so callers can treat "no user" as "nothing to show".
   let mePromise = null;
+  let meRejected = false; // the server said 401: signed out, or a token it won't accept
   function currentUser() {
     if (!mePromise) {
       mePromise = fetch("/api/me")
-        .then((res) => (res.ok ? res.json() : null))
+        .then((res) => {
+          meRejected = res.status === 401;
+          return res.ok ? res.json() : null;
+        })
         .catch(() => null);
     }
     return mePromise;
@@ -247,9 +251,15 @@
   async function mountUserBadge(target = document.querySelector(".app-header")) {
     if (!target) return null;
     const user = await currentUser();
-    if (!user) return null;
+    // A rejected sign-in (expired or stale session) is when a way out matters
+    // most: without a user there'd be no badge, and no way to start over.
+    if (!user && !meRejected) return null;
     const badge = el("div", { class: "user-badge" }, [
-      el("span", { class: "user-badge-email", text: user.email, title: `Signed in as ${user.email}` }),
+      el("span", {
+        class: "user-badge-email",
+        text: user ? user.email : "Sign-in problem",
+        title: user ? `Signed in as ${user.email}` : "The server didn't accept your sign-in - log out, then sign in again",
+      }),
       el("a", { class: "user-badge-logout", href: "/cdn-cgi/access/logout", text: "Log out" }),
     ]);
     target.appendChild(badge);
