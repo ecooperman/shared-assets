@@ -42,9 +42,19 @@ body {
   padding-bottom: calc(var(--nav-height) + env(safe-area-inset-bottom, 0));
 }
 
+/* The header sits in the same centered column as <main> (same max-width and
+   side padding), so its title lines up with the content below it instead of
+   hugging the window's left edge on a wide screen. A page that opts into
+   <main class="wide"> gets the wider column here too. */
 .app-header {
   position: relative;
+  max-width: 720px;
+  margin: 0 auto;
   padding: 24px 32px 8px;
+}
+
+body:has(main.wide) .app-header {
+  max-width: 1100px;
 }
 
 .app-header h1 {
