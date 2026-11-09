@@ -162,3 +162,8 @@ static assets, the Cloudflare Cache Rule bypass for
 `static.evancooperman.com` (see `DEPLOYMENT.md`) matters more here than for
 any other app - without it, a theme change can silently not show up
 anywhere until a manual "Purge Everything."
+
+## To do
+
+The running to-do list for all projects is `../TODO.md` (in the personal-projects
+folder, one level up; not in git).
