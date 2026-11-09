@@ -248,18 +248,24 @@
   // page header (theme.css's .user-badge). Log out ends their Cloudflare
   // Access session for this app; the next visit asks them to sign in again.
   // Does nothing when there's no user. Call once per page, after the DOM exists.
-  async function mountUserBadge(target = document.querySelector(".app-header")) {
+  // Pass { profileHref } (an app with a Profile page) to make the email a link to it.
+  async function mountUserBadge(target = document.querySelector(".app-header"), { profileHref = null } = {}) {
     if (!target) return null;
     const user = await currentUser();
     // A rejected sign-in (expired or stale session) is when a way out matters
     // most: without a user there'd be no badge, and no way to start over.
     if (!user && !meRejected) return null;
+    const emailAttrs = {
+      class: "user-badge-email",
+      text: user ? user.email : "Sign-in problem",
+      title: user ? `Signed in as ${user.email}` : "The server didn't accept your sign-in - log out, then sign in again",
+    };
+    if (user && profileHref) {
+      emailAttrs.href = profileHref;
+      emailAttrs.title = `Signed in as ${user.email} - open your profile`;
+    }
     const badge = el("div", { class: "user-badge" }, [
-      el("span", {
-        class: "user-badge-email",
-        text: user ? user.email : "Sign-in problem",
-        title: user ? `Signed in as ${user.email}` : "The server didn't accept your sign-in - log out, then sign in again",
-      }),
+      el(user && profileHref ? "a" : "span", emailAttrs),
       el("a", { class: "user-badge-logout", href: "/cdn-cgi/access/logout", text: "Log out" }),
     ]);
     target.appendChild(badge);

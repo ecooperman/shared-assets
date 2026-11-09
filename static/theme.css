@@ -85,6 +85,15 @@ body:has(main.wide) .app-header {
   padding-top: 38px;
 }
 
+a.user-badge-email {
+  color: inherit;
+  text-decoration: none;
+}
+
+a.user-badge-email:hover {
+  text-decoration: underline;
+}
+
 .user-badge-email {
   min-width: 0;
   overflow: hidden;
