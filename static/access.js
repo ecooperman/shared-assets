@@ -7,7 +7,8 @@
 // behave identically. It expects the app to serve, under `api`:
 //   GET/POST  {api}/members          PATCH/DELETE {api}/members/{user_id}
 //   GET/POST  {api}/invites          DELETE       {api}/invites/{id}
-// and GET /api/me (for how many invites are left). It builds its own markup (no
+// and GET /api/me (for how many invites are left) and GET /api/me/people (the
+// addresses to suggest in the box - a list of emails). It builds its own markup (no
 // element ids, so many can be on one page) and shows what went wrong right
 // under the box, where the person is looking. Styles are in theme.css.
 //
@@ -21,6 +22,7 @@
 //   access.reload();                      // refetch (e.g. when its panel opens)
 
 const Access = (() => {
+  let panels = 0; // gives each panel's suggestion list its own id
   const ROLE_LABELS = { owner: "Owner", edit: "Can edit", view: "Can view" };
 
   function mount(container, { api, noun = "list", name, onMembers = () => {}, hint: hintText }) {
@@ -34,10 +36,32 @@ const Access = (() => {
     const memberList = Global.el("div", { class: "member-list" });
     const inviteList = Global.el("div", { class: "member-list" });
 
+    // Suggestions for the box: people this person has shared with or asked for
+    // before (the server decides who), minus anyone already on this thing.
+    const suggestions = Global.el("datalist", { id: `access-people-${++panels}` });
+    let people = [];
+    const taken = { members: new Set(), invites: new Set() };
+    function showSuggestions() {
+      suggestions.replaceChildren(
+        ...people
+          .filter((email) => !taken.members.has(email) && !taken.invites.has(email))
+          .map((email) => Global.el("option", { value: email }))
+      );
+    }
+    async function loadPeople() {
+      try {
+        people = (await Global.fetchJSON("/api/me/people")).map((email) => email.toLowerCase());
+      } catch (err) {
+        people = []; // suggestions are a nicety: the box works without them
+      }
+      showSuggestions();
+    }
+
     const emailInput = Global.el("input", {
       type: "email",
       placeholder: "Email address",
       autocomplete: "off",
+      list: suggestions.id,
       "aria-label": "Email address to give access to",
     });
     const roleSelect = Global.el(
@@ -60,7 +84,7 @@ const Access = (() => {
           `Viewers can read this ${noun}; editors can also change what's in it. Only you can change who has access.`,
     });
 
-    container.replaceChildren(memberList, inviteList, addRow, prompt, hint);
+    container.replaceChildren(memberList, inviteList, addRow, suggestions, prompt, hint);
 
     function hidePrompt() {
       prompt.classList.add("hidden");
@@ -85,6 +109,8 @@ const Access = (() => {
         return;
       }
       onMembers(members);
+      taken.members = new Set(members.map((m) => m.email.toLowerCase()));
+      showSuggestions();
       memberList.replaceChildren(
         ...members.map((member) => {
           const row = Global.el("div", { class: "member-row" }, [Global.el("span", { class: "member-email", text: member.email })]);
@@ -134,6 +160,8 @@ const Access = (() => {
         showProblem(err.message);
         return;
       }
+      taken.invites = new Set(invites.map((i) => i.email.toLowerCase()));
+      showSuggestions();
       inviteList.replaceChildren(
         ...invites.map((invite) => {
           const pending = invite.status === "pending";
@@ -240,6 +268,7 @@ const Access = (() => {
         hidePrompt();
         loadMembers();
         loadInvites();
+        loadPeople();
       },
     };
   }
