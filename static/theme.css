@@ -1208,3 +1208,23 @@ a.secondary-btn {
   font-size: 14px;
   color: var(--muted);
 }
+
+/* Running on the server's own key (an administrator with no key of their own): loud
+   on purpose, because it means usage is billed to the server's account. */
+.key-status.house {
+  padding: 8px 12px;
+  border: 2px solid var(--accent);
+  border-radius: 6px;
+  background: var(--accent-bg);
+  font-weight: 700;
+}
+
+.key-banner {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border: 2px solid var(--accent);
+  border-radius: 8px;
+  background: var(--accent-bg);
+  font-size: 15px;
+  font-weight: 600;
+}
