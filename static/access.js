@@ -62,6 +62,12 @@ const Access = (() => {
       placeholder: "Email address",
       autocomplete: "off",
       list: suggestions.id,
+      // This is not a sign-in field: keep password managers (1Password, LastPass,
+      // Bitwarden) from attaching their own menu over the suggestions.
+      "data-1p-ignore": "",
+      "data-lpignore": "true",
+      "data-bwignore": "true",
+      "data-form-type": "other",
       "aria-label": "Email address to give access to",
     });
     const roleSelect = Global.el(
