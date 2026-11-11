@@ -1228,3 +1228,14 @@ a.secondary-btn {
   font-size: 15px;
   font-weight: 600;
 }
+
+/* A hint line that reports a problem (e.g. under the invite box). */
+.field-hint.is-error {
+  color: var(--danger);
+}
+
+/* A smaller heading inside a section (e.g. "Your requests" under the invite box). */
+.section-subhead {
+  margin: 18px 0 8px;
+  font-size: 15px;
+}
