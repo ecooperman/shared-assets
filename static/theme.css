@@ -929,6 +929,23 @@ a.secondary-btn {
   border-top: 1px solid var(--border);
 }
 
+.multiselect-panel-actions-split {
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.ask-name-form {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ask-name-form input {
+  flex: 1;
+  min-width: 0;
+}
+
 .multiselect-clear {
   padding: 4px 6px;
   border: none;

@@ -273,6 +273,51 @@
     return badge;
   }
 
+  // --- "name it" prompt, for creating something from inside a dropdown ---------
+  //
+  // The way to make a new category, label or the like without leaving the page:
+  // the dropdown has an "Add new ..." entry, and choosing it swaps `anchor` (the
+  // control) for a small form - a name box, Add and Cancel - until it is
+  // answered. `submit(name)` does the creating and resolves with whatever the
+  // caller wants back (null if it failed, having shown why); `done(result)` gets
+  // that, or null if the person cancelled or typed nothing. Enter adds, Escape
+  // cancels. The class options let a page keep its own layout rules.
+  function askForName(anchor, { placeholder = "New name", maxlength = 40, formClass = "", inputClass = "", cancelClass = "cancel-btn", submit }, done) {
+    const nameInput = el("input", { type: "text", class: inputClass, placeholder, maxlength: String(maxlength), "aria-label": placeholder });
+    const addBtn = el("button", { type: "button", class: "save-btn", text: "Add" });
+    const cancelBtn = el("button", { type: "button", class: cancelClass, text: "Cancel" });
+    const form = el("span", { class: `ask-name-form ${formClass}`.trim() }, [nameInput, addBtn, cancelBtn]);
+    anchor.classList.add("hidden");
+    anchor.after(form);
+    nameInput.focus();
+    let finished = false;
+    const finish = (result) => {
+      if (finished) return;
+      finished = true;
+      form.remove();
+      anchor.classList.remove("hidden");
+      done(result);
+    };
+    let adding = false;
+    const add = async () => {
+      if (adding) return;
+      adding = true;
+      const typed = nameInput.value.trim();
+      finish(typed ? await submit(typed) : null);
+    };
+    addBtn.addEventListener("click", add);
+    cancelBtn.addEventListener("click", () => finish(null));
+    nameInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        add();
+      } else if (e.key === "Escape") {
+        e.stopPropagation(); // cancel this prompt, not also the dropdown it sits in
+        finish(null);
+      }
+    });
+  }
+
   // --- multiselect dropdown (theme.css's .multiselect/.multiselect-trigger/
   // .multiselect-panel) - a button that opens a checklist panel, for
   // filtering a list by an open-ended set of options (categories, tags,
@@ -287,7 +332,12 @@
   // onChange(selectedValues) fires on every check/uncheck/Clear, with the
   // full current array of selected values (strings) - the caller owns
   // filtering its own list from that, this widget only owns the UI.
-  function buildMultiSelect({ options, selected = [], placeholder = "All", onChange }) {
+  // addNew: {label, placeholder, create(name)} - optional; adds an "Add new..."
+  // button that asks for a name, calls create(name) (resolving with an option
+  // {value, label, color}, or null if it failed) and adds the result ticked.
+  // A name the list already has (any capitalisation) is just ticked instead.
+  function buildMultiSelect({ options, selected = [], placeholder = "All", onChange, addNew = null }) {
+    options = [...options];
     let current = new Set(selected.map(String));
 
     const trigger = el("button", { type: "button", class: "multiselect-trigger", "aria-haspopup": "listbox", "aria-expanded": "false" }, [
@@ -308,9 +358,10 @@
     }
     refreshTriggerLabel();
 
-    const optionRows = options.map((opt) => {
+    function makeRow(opt) {
       const value = String(opt.value);
       const checkbox = el("input", { type: "checkbox" });
+      checkbox.dataset.value = value;
       checkbox.checked = current.has(value);
       checkbox.addEventListener("change", () => {
         if (checkbox.checked) current.add(value);
@@ -326,7 +377,8 @@
       }
       children.push(el("span", { class: "multiselect-option-label", text: opt.label }));
       return el("label", { class: "multiselect-option" }, children);
-    });
+    }
+    const optionRows = options.map(makeRow);
 
     const clearBtn = el("button", {
       type: "button",
@@ -340,7 +392,44 @@
       },
     });
 
-    const panel = el("div", { class: "multiselect-panel hidden", role: "listbox" }, [...optionRows, el("div", { class: "multiselect-panel-actions" }, [clearBtn])]);
+    const actions = el("div", { class: "multiselect-panel-actions" }, [clearBtn]);
+    const panel = el("div", { class: "multiselect-panel hidden", role: "listbox" }, [...optionRows, actions]);
+
+    function tick(row) {
+      const box = row.querySelector("input");
+      box.checked = true;
+      current.add(String(box.dataset.value));
+      refreshTriggerLabel();
+      if (onChange) onChange([...current]);
+    }
+
+    if (addNew) {
+      actions.classList.add("multiselect-panel-actions-split");
+      const addBtn = el("button", { type: "button", class: "multiselect-clear", text: addNew.label || "Add new..." });
+      actions.prepend(addBtn);
+      addBtn.addEventListener("click", () => {
+        askForName(
+          addBtn,
+          {
+            placeholder: addNew.placeholder || "New name",
+            submit: async (name) => {
+              const index = options.findIndex((o) => o.label.toLowerCase() === name.toLowerCase());
+              if (index >= 0) return optionRows[index];
+              const created = await addNew.create(name);
+              if (!created) return null;
+              options.push(created);
+              const row = makeRow(created);
+              optionRows.push(row);
+              actions.before(row);
+              return row;
+            },
+          },
+          (row) => {
+            if (row) tick(row);
+          }
+        );
+      });
+    }
 
     trigger.addEventListener("click", () => {
       const opening = panel.classList.contains("hidden");
@@ -358,6 +447,9 @@
   }
 
   document.addEventListener("click", (e) => {
+    // A click on something that has just been taken out of the page (Cancel on
+    // the "name it" form) is not a click outside the dropdown.
+    if (!e.target.isConnected) return;
     document.querySelectorAll(".multiselect-panel:not(.hidden)").forEach((panel) => {
       const root = panel.closest(".multiselect");
       if (root && !root.contains(e.target)) {
@@ -606,6 +698,7 @@
     closeModal,
     buildNav,
     buildMultiSelect,
+    askForName,
     showLoading,
     hideLoading,
     withLoading,
