@@ -152,7 +152,7 @@ What an opted-in page gets:
 - **File inputs** (`<input type="file">`) get a themed "Choose file" button, so they no longer
   show the browser's light grey one in dark mode.
 - New icons: sun, moon, theme-auto, panel-left, more, edit, trash, external,
-  archive, share, mail, users, plus, copy, map-pin.
+  archive, share, mail, users, plus, copy, map-pin, arrow-right.
 
 Cache note: browsers hold theme.css/js and icons.js for a while - hard-refresh
 (Cmd+Shift+R) after deploying a change to them.
