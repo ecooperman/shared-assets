@@ -264,9 +264,21 @@
   function mountThemeToggle() {
     if (!isV2()) return null;
     const tools = headerTools();
-    if (!tools || tools.querySelector(".theme-toggle")) return null;
+    // A page with no header (the time-management planner) gets the same
+    // control as an entry in the sidebar instead.
+    const nav = tools ? null : document.querySelector(".app-nav");
+    if (!tools && !nav) return null;
+    if ((tools || nav).querySelector(".theme-toggle")) return null;
     const icon = el("span", { "data-icon": "theme-auto", "aria-hidden": "true" });
-    const button = el("button", { type: "button", class: "icon-btn theme-toggle" }, [icon]);
+    let button;
+    let labelEl = null;
+    if (tools) {
+      button = el("button", { type: "button", class: "icon-btn theme-toggle" }, [icon]);
+    } else {
+      icon.className = "app-nav-icon";
+      labelEl = el("span", { class: "app-nav-label" });
+      button = el("button", { type: "button", class: "app-nav-link theme-toggle" }, [icon, labelEl]);
+    }
     const refresh = () => {
       const choice = themeChoice();
       icon.dataset.icon = THEME_ICONS[choice];
@@ -274,13 +286,20 @@
       const next = THEME_CHOICES[(THEME_CHOICES.indexOf(choice) + 1) % THEME_CHOICES.length];
       button.title = `Theme: ${THEME_LABELS[choice]}. Click for ${THEME_LABELS[next]}.`;
       button.setAttribute("aria-label", button.title);
+      if (labelEl) labelEl.textContent = "Theme";
     };
     button.addEventListener("click", () => {
       const next = THEME_CHOICES[(THEME_CHOICES.indexOf(themeChoice()) + 1) % THEME_CHOICES.length];
       setThemeChoice(next);
       refresh();
     });
-    tools.prepend(button);
+    if (tools) {
+      tools.prepend(button);
+    } else {
+      // Ahead of the Collapse control, which stays last.
+      const collapse = nav.querySelector(".app-nav-collapse");
+      nav.insertBefore(button, collapse || null);
+    }
     refresh();
     return button;
   }
@@ -354,6 +373,53 @@
     mount.replaceWith(nav);
     if (typeof applyIcons === "function") applyIcons(nav);
     mountThemeToggle();
+  }
+
+  // Folds a row of buttons into one "..." menu, keeping only the main ones in
+  // view. The real buttons stay in the page, hidden, and each menu item presses
+  // its button - so handlers, and code that shows or hides a button with the
+  // "hidden" class (a button that is hidden is left out of the menu), carry on
+  // working untouched.
+  //   Global.foldActions(row, {
+  //     keep: "#save, #done",   // selector for the children that stay visible
+  //     ariaLabel: "More actions",
+  //     icon: (button) => "trash" | null,   // optional; default by class and text
+  //   })
+  // Does nothing (returns null) on a page that hasn't opted in to the new look.
+  // Anything marked .danger / .danger-btn goes last, set apart by a separator.
+  function foldActions(row, { keep = "", ariaLabel = "More actions", icon = null, offered = null } = {}) {
+    if (!row || !isV2()) return null;
+    const folded = [...row.children].filter((child) => !(keep && child.matches(keep)));
+    if (!folded.length) return null;
+    const isDanger = (b) => b.classList.contains("danger") || b.classList.contains("danger-btn");
+    const defaultIcon = (b) => {
+      if (isDanger(b)) return "trash";
+      if (b.textContent.toLowerCase().includes("archive")) return "archive";
+      return "sliders"; // never leave a row bare: a menu with some icons and some not looks broken
+    };
+    const isOffered = offered || ((b) => !b.classList.contains("hidden") && !b.hidden);
+    const holder = el("div", { class: "hidden" }, folded);
+    const menu = buildMenu({
+      icon: "more",
+      ariaLabel,
+      items: () => {
+        const normal = [];
+        const danger = [];
+        for (const button of folded) {
+          if (!isOffered(button)) continue;
+          const item = {
+            label: button.textContent.trim(),
+            icon: (icon && icon(button)) || defaultIcon(button),
+            danger: isDanger(button),
+            onclick: () => button.click(),
+          };
+          (item.danger ? danger : normal).push(item);
+        }
+        return danger.length && normal.length ? [...normal, { separator: true }, ...danger] : [...normal, ...danger];
+      },
+    });
+    row.append(holder, menu);
+    return menu;
   }
 
   // A button that opens a small menu of actions: the "..." on a card, or a
@@ -939,6 +1005,7 @@
     buildNav,
     buildMultiSelect,
     buildMenu,
+    foldActions,
     askForName,
     showLoading,
     hideLoading,

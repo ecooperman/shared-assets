@@ -135,6 +135,16 @@ What an opted-in page gets:
   click, Escape or choosing an item. Items may be a function (re-evaluated on open).
   Use it for the "..." on a card or header and for the Share menu, so secondary
   actions stop competing with the one thing worth a button.
+- **`Global.foldActions(row, {keep, ariaLabel, icon})`**: folds the buttons of a row into
+  one "..." menu, keeping only the ones matching `keep` visible. The real buttons stay in
+  the page (hidden) and each menu item presses its button, so existing handlers and code
+  that shows or hides a button with the `hidden` class keep working (a hidden button is
+  left out of the menu). `.danger` / `.danger-btn` buttons go last, set apart. Returns
+  `null` on a page that hasn't opted in.
+- **Theme button with no page header**: when a page has no `.app-header`, the theme button
+  is added to the sidebar as a "Theme" entry instead of the top-right corner.
+- An open menu is not clipped by its card (`.item-card` / `.archived-section` allow
+  overflow while one of their menus is open).
 - New icons: sun, moon, theme-auto, panel-left, more, edit, trash, external,
   archive, share, mail, users, plus, copy.
 
