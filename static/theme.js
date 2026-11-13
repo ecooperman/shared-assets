@@ -1036,6 +1036,13 @@
     [/^generate\b/, "zap"],
     [/^put on hold\b/, "pause"],
     [/^back to backlog\b/, "inbox"],
+    [/^(back to|undo)\b/, "undo"],
+    [/^set actual\b/, "edit"],
+    [/^(set|mark)\b/, "check"],
+    [/^include\b/, "eye"],
+    [/^exclude\b/, "eye-off"],
+    [/^convert\b/, "repeat"],
+    [/^couldn't pay\b/, "arrow-right"],
     [/^enable reminders\b/, "bell"],
     [/^repeat\b/, "repeat"],
     [/^request\b/, "mail"],
@@ -1068,7 +1075,7 @@
   // A button whose whole label is one of these (a close "×", a "←" / "→") is
   // icon-only: with data-btn-icon the glyph is swapped for the icon. Give it an
   // aria-label or title so it still has a name.
-  const GLYPH_ONLY = /^[×✕✖←→↑↓‹›]+$/u;
+  const GLYPH_ONLY = /^[×✕✖←→↑↓▲▼▴▾‹›]+$/u;
 
   function iconifyButton(button) {
     const explicit = button.getAttribute("data-btn-icon");
