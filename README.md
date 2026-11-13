@@ -100,6 +100,47 @@ learn who's signed in from Cloudflare Access and answer `GET /api/me` with
 Only call these from pages of apps that actually have `/api/me` - elsewhere
 they just find nothing, but there's no reason to make the request.
 
+## The new look (dark/light theme, sidebar, menus)
+
+An app moves to the new look by opting in, one app at a time. Until it does it
+renders exactly as before (apart from the refreshed light colours that every
+app picks up from the shared tokens).
+
+To opt an app in, on every template:
+
+- `<html lang="en" data-ui="v2">`
+- right after the theme.css link, `<script src="{{ shared_assets_base }}/theme-init.js"></script>`
+  (runs in `<head>` so the theme is set before the first paint - no flash)
+- an app's own `style.css` must use the colour tokens (`--bg --surface --muted-bg
+  --border --border-strong --text --muted --hover --accent --accent-text --accent-bg
+  --danger[-bg] --success[-bg] --warning[-bg] --shadow --overlay`), never a hard-coded
+  hex, so both themes follow. An app may keep its own accent by overriding `--accent`,
+  `--accent-bg` (and `--accent-text`) in `:root` and again in `:root[data-theme="dark"]`.
+  User-chosen colours (e.g. category chips) stay as chosen.
+
+What an opted-in page gets:
+
+- **Theme**: Light, Dark or Match my device (the default), chosen with the small
+  button at the top right of the header (`Global.mountThemeToggle`, added by
+  `Global.buildNav`). The choice is a cookie on `.evancooperman.com` (`theme`), so it
+  follows the person across apps. `Global.themeChoice()` / `setThemeChoice()`.
+- **Sidebar nav**: `Global.buildNav` renders a collapsible sidebar from 900px up
+  (collapsed state is the shared `nav` cookie) and the old bottom tab bar below that.
+  An item's optional `group` ("Setup", "Admin") starts a titled section, and
+  `badge: {id, count}` adds a count. Calling `buildNav` again replaces the nav (used
+  once it is known whether the person is an administrator). The sidebar is also where
+  links to other apps and the planned dashboard go.
+- **`Global.buildMenu({icon, label, ariaLabel, items, align})`**: a button that opens a
+  menu of actions (`.menu`, `.menu-item`, `.menu-sep`, `.danger`), closed by an outside
+  click, Escape or choosing an item. Items may be a function (re-evaluated on open).
+  Use it for the "..." on a card or header and for the Share menu, so secondary
+  actions stop competing with the one thing worth a button.
+- New icons: sun, moon, theme-auto, panel-left, more, edit, trash, external,
+  archive, share, mail, users, plus, copy.
+
+Cache note: browsers hold theme.css/js and icons.js for a while - hard-refresh
+(Cmd+Shift+R) after deploying a change to them.
+
 ## Cloudflare Access: deliberately public (Bypass)
 
 Unlike every other hostname in the fleet, `static.evancooperman.com` is

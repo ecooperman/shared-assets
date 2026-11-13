@@ -198,31 +198,266 @@
     document.querySelectorAll(".modal-overlay:not(.hidden)").forEach((m) => m.classList.add("hidden"));
   });
 
+  // --- the new look (pages that opt in with <html data-ui="v2">) -------------
+  //
+  // Theme: the person chooses Light, Dark or Match my device. The choice is a
+  // cookie on .evancooperman.com, so it follows them from app to app, and
+  // theme-init.js (in <head>) applies it before the page paints. Same for the
+  // sidebar's collapsed state. Pages that haven't opted in ignore all of this.
+  const isV2 = () => document.documentElement.getAttribute("data-ui") === "v2";
+
+  function readCookie(name) {
+    const m = document.cookie.match(new RegExp("(?:^|; )" + name + "=([^;]*)"));
+    return m ? decodeURIComponent(m[1]) : null;
+  }
+
+  function writeCookie(name, value) {
+    const shared = /(^|\.)evancooperman\.com$/.test(location.hostname) ? "; domain=.evancooperman.com" : "";
+    const age = value === null ? "; max-age=0" : "; max-age=31536000";
+    document.cookie = `${name}=${value === null ? "" : encodeURIComponent(value)}; path=/; SameSite=Lax${shared}${age}`;
+  }
+
+  const THEME_CHOICES = ["device", "light", "dark"];
+  const THEME_LABELS = { device: "Match my device", light: "Light", dark: "Dark" };
+  const THEME_ICONS = { device: "theme-auto", light: "sun", dark: "moon" };
+
+  function themeChoice() {
+    const saved = readCookie("theme");
+    return saved === "light" || saved === "dark" ? saved : "device";
+  }
+
+  function applyTheme() {
+    if (!isV2()) return;
+    const choice = themeChoice();
+    const dark = choice === "dark" || (choice === "device" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+    document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
+  }
+
+  function setThemeChoice(choice) {
+    writeCookie("theme", choice === "device" ? null : choice);
+    applyTheme();
+  }
+
+  // When the choice is "Match my device", follow the device as it changes.
+  if (window.matchMedia) {
+    matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
+      if (themeChoice() === "device") applyTheme();
+    });
+  }
+
+  // The top-right corner of the page header: the theme button, then (see
+  // mountUserBadge) the signed-in person. Made on first use.
+  function headerTools() {
+    const header = document.querySelector(".app-header");
+    if (!header) return null;
+    let tools = header.querySelector(".header-tools");
+    if (!tools) {
+      tools = el("div", { class: "header-tools" });
+      header.appendChild(tools);
+      header.classList.add("has-header-tools");
+    }
+    return tools;
+  }
+
+  // One small button that steps Light -> Dark -> Match my device. Does nothing
+  // on a page that hasn't opted in.
+  function mountThemeToggle() {
+    if (!isV2()) return null;
+    const tools = headerTools();
+    if (!tools || tools.querySelector(".theme-toggle")) return null;
+    const icon = el("span", { "data-icon": "theme-auto", "aria-hidden": "true" });
+    const button = el("button", { type: "button", class: "icon-btn theme-toggle" }, [icon]);
+    const refresh = () => {
+      const choice = themeChoice();
+      icon.dataset.icon = THEME_ICONS[choice];
+      applyIcons(button);
+      const next = THEME_CHOICES[(THEME_CHOICES.indexOf(choice) + 1) % THEME_CHOICES.length];
+      button.title = `Theme: ${THEME_LABELS[choice]}. Click for ${THEME_LABELS[next]}.`;
+      button.setAttribute("aria-label", button.title);
+    };
+    button.addEventListener("click", () => {
+      const next = THEME_CHOICES[(THEME_CHOICES.indexOf(themeChoice()) + 1) % THEME_CHOICES.length];
+      setThemeChoice(next);
+      refresh();
+    });
+    tools.prepend(button);
+    refresh();
+    return button;
+  }
+
   // Renders theme.css's .app-nav into <div id="app-nav-mount">, generalized
   // from trip-planning's nav.js (the one app that already had this instead
   // of hand-written nav HTML per page). `items` is
-  // [{href, icon, label, active}, ...] for links, or {icon, label, onclick}
-  // (no href) for an action button like Refresh - the app itself still
-  // decides its own links/icons/active-page logic (that's inherently
-  // per-app routing), this just builds and mounts the DOM + applies icons.
-  // Call after icons.js has loaded (applyIcons must exist).
+  // [{href, icon, label, active, group}, ...] for links, or
+  // {icon, label, onclick} (no href) for an action button like Refresh - the
+  // app itself still decides its own links/icons/active-page logic (that's
+  // inherently per-app routing), this just builds and mounts the DOM +
+  // applies icons. Call after icons.js has loaded (applyIcons must exist).
+  //
+  // On a page with <html data-ui="v2"> it is a collapsible sidebar on a wide
+  // screen (the bottom tab bar on a phone), and an item's optional `group`
+  // ("Setup", "Admin") starts a titled section. The sidebar is also where
+  // links to the other apps and the dashboard will go.
+  // Calling it again later (e.g. once it is known whether this person is an
+  // administrator) replaces the nav already on the page with the new items.
+  // An item may also carry `badge: {id, count}`: a small count after its label.
   function buildNav(items, mountId = "app-nav-mount") {
-    const mount = document.getElementById(mountId);
+    const mount = document.getElementById(mountId) || document.querySelector("nav.app-nav");
     if (!mount) return;
-    const nav = el(
-      "nav",
-      { class: "app-nav" },
-      items.map((item) => {
-        const iconSpan = el("span", { class: "app-nav-icon", "data-icon": item.icon, "aria-hidden": "true" });
-        const label = item.label;
-        return item.href
-          ? el("a", { href: item.href, class: "app-nav-link" + (item.active ? " active" : "") }, [iconSpan, label])
-          : el("button", { type: "button", class: "app-nav-link", onclick: item.onclick }, [iconSpan, label]);
-      })
-    );
+    const v2 = isV2();
+    const children = [];
+    let group = null;
+    for (const item of items) {
+      if (v2 && (item.group || null) !== group) {
+        group = item.group || null;
+        children.push(group ? el("div", { class: "app-nav-group", text: group }) : el("div", { class: "app-nav-group-gap" }));
+      }
+      const iconSpan = el("span", { class: "app-nav-icon", "data-icon": item.icon, "aria-hidden": "true" });
+      const label = el("span", { class: "app-nav-label", text: item.label });
+      const content = [iconSpan, label];
+      if (item.badge) {
+        content.push(
+          el("span", {
+            id: item.badge.id || null,
+            class: "item-badge item-badge-accent nav-count" + (item.badge.count ? "" : " hidden"),
+            text: String(item.badge.count || 0),
+          })
+        );
+      }
+      children.push(
+        item.href
+          ? el("a", { href: item.href, class: "app-nav-link" + (item.active ? " active" : ""), title: item.label }, content)
+          : el("button", { type: "button", class: "app-nav-link", title: item.label, onclick: item.onclick }, content)
+      );
+    }
+    if (v2) {
+      const root = document.documentElement;
+      const collapse = el("button", { type: "button", class: "app-nav-link app-nav-collapse" }, [
+        el("span", { class: "app-nav-icon", "data-icon": "panel-left", "aria-hidden": "true" }),
+        el("span", { class: "app-nav-label", text: "Collapse" }),
+      ]);
+      const sync = () => {
+        const collapsed = root.classList.contains("nav-collapsed");
+        collapse.title = collapsed ? "Expand the sidebar" : "Collapse the sidebar";
+        collapse.setAttribute("aria-label", collapse.title);
+        collapse.setAttribute("aria-expanded", String(!collapsed));
+      };
+      collapse.addEventListener("click", () => {
+        root.classList.toggle("nav-collapsed");
+        writeCookie("nav", root.classList.contains("nav-collapsed") ? "collapsed" : null);
+        sync();
+      });
+      sync();
+      children.push(collapse);
+    }
+    const nav = el("nav", { class: "app-nav", "aria-label": "Main" }, children);
     mount.replaceWith(nav);
     if (typeof applyIcons === "function") applyIcons(nav);
+    mountThemeToggle();
   }
+
+  // A button that opens a small menu of actions: the "..." on a card, or a
+  // "Share" button with its choices. Styles are theme.css's .menu. Returns the
+  // wrapper element to place on the page.
+  //
+  //   Global.buildMenu({
+  //     icon: "more",                  // icons.js name; omit for a text-only button
+  //     label: "Share",                // button text; omit for an icon-only button
+  //     ariaLabel: "More actions",     // required for an icon-only button (also its tooltip)
+  //     triggerClass: "icon-btn",      // default "icon-btn" with no label, "secondary-btn" with one
+  //     align: "right",                // which edge of the button the menu lines up with
+  //     items: [                       // or a function returning this, run each time it opens
+  //       { label: "Edit", icon: "edit", onclick: () => ... },
+  //       { label: "Visit website", icon: "link", href: "https://..." },
+  //       { separator: true },
+  //       { label: "Delete...", icon: "trash", danger: true, onclick: () => ... },
+  //     ],
+  //   });
+  //
+  // Closes on a click anywhere else, Escape (focus goes back to the button) or
+  // choosing an item. Only one menu is open at a time.
+  function buildMenu({ icon = null, label = "", ariaLabel = "", triggerClass = null, align = "right", items }) {
+    const trigger = el("button", {
+      type: "button",
+      class: triggerClass || (label ? "secondary-btn" : "icon-btn"),
+      "aria-haspopup": "menu",
+      "aria-expanded": "false",
+    });
+    if (icon) trigger.appendChild(el("span", { class: "btn-icon", "data-icon": icon, "aria-hidden": "true" }));
+    if (label) trigger.appendChild(document.createTextNode(label));
+    const name = ariaLabel || label;
+    if (name) {
+      trigger.setAttribute("aria-label", name);
+      if (!label) trigger.title = name;
+    }
+    const menu = el("div", { class: "menu hidden", role: "menu" });
+    if (align === "left") {
+      menu.style.left = "0";
+      menu.style.right = "auto";
+    }
+    const wrap = el("div", { class: "menu-wrap" }, [trigger, menu]);
+    if (typeof applyIcons === "function") applyIcons(trigger);
+
+    const close = () => {
+      menu.classList.add("hidden");
+      trigger.setAttribute("aria-expanded", "false");
+    };
+    const render = () => {
+      menu.replaceChildren();
+      for (const item of typeof items === "function" ? items() : items) {
+        if (!item) continue;
+        if (item.separator) {
+          menu.appendChild(el("div", { class: "menu-sep", role: "separator" }));
+          continue;
+        }
+        const children = [];
+        if (item.icon) children.push(el("span", { class: "menu-icon", "data-icon": item.icon, "aria-hidden": "true" }));
+        children.push(item.label);
+        const attrs = { class: "menu-item" + (item.danger ? " danger" : ""), role: "menuitem" };
+        let row;
+        if (item.href) {
+          row = el("a", { ...attrs, href: item.href, target: "_blank", rel: "noopener" }, children);
+          row.addEventListener("click", close);
+        } else {
+          row = el("button", { ...attrs, type: "button" }, children);
+          row.addEventListener("click", () => {
+            close();
+            if (item.onclick) item.onclick();
+          });
+        }
+        menu.appendChild(row);
+      }
+      if (typeof applyIcons === "function") applyIcons(menu);
+    };
+    trigger.addEventListener("click", (e) => {
+      e.stopPropagation(); // a card's own click handler (expand/collapse) must not also fire
+      const opening = menu.classList.contains("hidden");
+      document.querySelectorAll(".menu:not(.hidden)").forEach((m) => m.classList.add("hidden"));
+      if (opening) {
+        render();
+        menu.classList.remove("hidden");
+        trigger.setAttribute("aria-expanded", "true");
+        const first = menu.querySelector(".menu-item");
+        if (first && e.detail === 0) first.focus(); // opened from the keyboard
+      }
+    });
+    wrap.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && !menu.classList.contains("hidden")) {
+        e.stopPropagation();
+        close();
+        trigger.focus();
+      }
+    });
+    return wrap;
+  }
+
+  document.addEventListener("click", () => {
+    document.querySelectorAll(".menu:not(.hidden)").forEach((m) => {
+      m.classList.add("hidden");
+      const trigger = m.parentElement && m.parentElement.querySelector("[aria-haspopup]");
+      if (trigger) trigger.setAttribute("aria-expanded", "false");
+    });
+  });
 
   // --- who is signed in (apps with accounts) ---
   // There's no login form: Cloudflare Access signs people in and the app
@@ -268,8 +503,13 @@
       el(user && profileHref ? "a" : "span", emailAttrs),
       el("a", { class: "user-badge-logout", href: "/cdn-cgi/access/logout", text: "Log out" }),
     ]);
-    target.appendChild(badge);
-    target.classList.add("has-user-badge"); // makes room for it above the title
+    const tools = isV2() && target === document.querySelector(".app-header") ? headerTools() : null;
+    if (tools) {
+      tools.appendChild(badge);
+    } else {
+      target.appendChild(badge);
+      target.classList.add("has-user-badge"); // makes room for it above the title
+    }
     return badge;
   }
 
@@ -698,6 +938,7 @@
     closeModal,
     buildNav,
     buildMultiSelect,
+    buildMenu,
     askForName,
     showLoading,
     hideLoading,
@@ -706,5 +947,8 @@
     supportsInlineEdit,
     currentUser,
     mountUserBadge,
+    mountThemeToggle,
+    themeChoice,
+    setThemeChoice,
   };
 })();

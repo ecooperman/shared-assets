@@ -9,21 +9,58 @@
    this during migration rather than the other way around, so a future app
    can adopt these classes directly with zero renaming. */
 
+/* Colour tokens. Light is the default; dark applies when <html> has
+   data-theme="dark" (set by theme-init.js from the person's choice - Light,
+   Dark or Match my device - before the page paints). A page only takes part
+   once it opts in with <html data-themes>: until an app's own stylesheet has
+   been moved onto these tokens it stays light. Never hard-code a colour in an
+   app's CSS: use a token, so both themes follow. */
 :root {
-  --border: #e3e1db;
-  --text: #2b2b2b;
-  --muted: #6b675f;
-  --muted-bg: #f2f0ea;
-  --bg: #f6f5f2;
+  --bg: #fafaf9;
+  --surface: #ffffff;
+  --muted-bg: #f4f4f2;
+  --border: #e7e6e2;
+  --border-strong: #d6d4ce;
+  --text: #1c1c1a;
+  --muted: #6f6e68;
+  --hover: rgba(0, 0, 0, 0.045);
   --accent: #2b6f5c;
-  --accent-bg: #eef1ee;
+  --accent-text: #ffffff;
+  --accent-bg: #e6f0ec;
   --danger: #c0442f;
   --danger-bg: #fbe9e7;
   --success: #1e7a34;
   --success-bg: #e6f4ea;
   --warning: #a6690a;
   --warning-bg: #fff6e5;
+  --shadow: 0 8px 24px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.06);
+  --overlay: rgba(0, 0, 0, 0.35);
   --nav-height: 56px;
+  --radius: 8px;
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  --bg: #0b0c0d;
+  --surface: #131416;
+  --muted-bg: #1a1b1e;
+  --border: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.16);
+  --text: #f1f2f3;
+  --muted: #8b9097;
+  --hover: rgba(255, 255, 255, 0.06);
+  --accent: #3fae90;
+  --accent-text: #06120e;
+  --accent-bg: rgba(63, 174, 144, 0.14);
+  --danger: #ef7a66;
+  --danger-bg: rgba(239, 122, 102, 0.13);
+  --success: #4fbf7a;
+  --success-bg: rgba(79, 191, 122, 0.13);
+  --warning: #e0a23a;
+  --warning-bg: rgba(224, 162, 58, 0.13);
+  --shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.08);
+  --overlay: rgba(0, 0, 0, 0.6);
+  color-scheme: dark;
 }
 
 * {
@@ -36,7 +73,9 @@
 
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+  letter-spacing: -0.006em;
+  -webkit-font-smoothing: antialiased;
   background: var(--bg);
   color: var(--text);
   padding-bottom: calc(var(--nav-height) + env(safe-area-inset-bottom, 0));
@@ -59,7 +98,9 @@ body:has(main.wide) .app-header {
 
 .app-header h1 {
   margin: 0;
-  font-size: 24px;
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
 }
 
 .app-header .subtitle {
@@ -147,7 +188,7 @@ a {
   bottom: 0;
   display: flex;
   min-height: var(--nav-height);
-  background: #fff;
+  background: var(--surface);
   border-top: 1px solid var(--border);
   padding-bottom: env(safe-area-inset-bottom, 0);
   z-index: 50;
@@ -164,7 +205,7 @@ a {
   color: var(--muted);
   text-decoration: none;
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 500;
 }
 
 /* .app-nav-link is also used on the <button> refresh action - undo the
@@ -213,8 +254,8 @@ button.app-nav-link {
     position: static;
     min-height: 0;
     border: 1px solid var(--border);
-    border-radius: 8px;
-    background: #fff;
+    border-radius: var(--radius);
+    background: var(--surface);
     padding: 6px;
     margin: 16px 32px 0;
     justify-content: flex-start;
@@ -233,8 +274,18 @@ button.app-nav-link {
     border-radius: 6px;
   }
 
+  .app-nav-link {
+    color: var(--muted);
+  }
+
+  .app-nav-link:hover {
+    background: var(--hover);
+    color: var(--text);
+  }
+
   .app-nav-link.active {
-    background: var(--accent-bg);
+    background: var(--hover);
+    color: var(--text);
   }
 }
 
@@ -269,11 +320,9 @@ button.app-nav-link {
 }
 
 label {
-  font-size: 12px;
-  font-weight: 600;
+  font-size: 12.5px;
+  font-weight: 500;
   color: var(--muted);
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
 }
 
 .required {
@@ -301,9 +350,10 @@ select {
   /* 16px minimum keeps iOS Safari from auto-zooming the page on focus */
   font-size: 16px;
   padding: 8px 10px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-strong);
   border-radius: 6px;
-  background: #fff;
+  background: var(--surface);
+  color: var(--text);
   width: 100%;
 }
 
@@ -318,7 +368,7 @@ select {
   appearance: none;
   -webkit-appearance: none;
   padding-right: 34px;
-  background-color: #fff;
+  background-color: var(--surface);
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none' stroke='%236b675f' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M1.5 1.75 6 6.25l4.5-4.5'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 12px center;
@@ -337,7 +387,16 @@ button {
   border: none;
   border-radius: 6px;
   padding: 8px 14px;
-  font-weight: 600;
+  font-weight: 500;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
 }
 
 label.checkbox-label {
@@ -412,18 +471,24 @@ label.checkbox-label input {
 .add-toggle {
   display: block;
   width: 100%;
-  background: var(--text);
-  color: #fff;
-  padding: 12px;
-  font-size: 15px;
-  font-weight: 600;
+  background: transparent;
+  color: var(--muted);
+  border: 1px dashed var(--border-strong);
+  padding: 11px;
+  font-size: 14px;
+  font-weight: 500;
   margin-bottom: 16px;
 }
 
+.add-toggle:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+
 .add-card {
-  border-left: 4px solid var(--accent);
-  background: #fff;
-  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: var(--radius);
   padding: 20px;
   margin-bottom: 24px;
 }
@@ -461,10 +526,14 @@ label.checkbox-label input {
    with Global.wireAccordionToggle() (theme.js) rather than reimplementing it. --- */
 
 .item-card {
-  background: #fff;
+  background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius);
   overflow: hidden;
+}
+
+.item-card:hover {
+  border-color: var(--border-strong);
 }
 
 .item-card.archived,
@@ -509,8 +578,8 @@ label.checkbox-label input {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-weight: 600;
-  font-size: 15px;
+  font-weight: 550;
+  font-size: 14.5px;
 }
 
 /* Small icon-only link inline in a summary row (e.g. jump straight to a
@@ -617,17 +686,28 @@ label.checkbox-label input {
 
 .save-btn {
   background: var(--accent);
-  color: #fff;
+  color: var(--accent-text);
+}
+
+.save-btn:hover {
+  filter: brightness(1.08);
 }
 
 .cancel-btn {
-  background: #eee;
-  color: #4a473f;
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border-strong);
 }
 
 .secondary-btn {
-  background: var(--muted-bg);
+  background: transparent;
   color: var(--text);
+  border: 1px solid var(--border-strong);
+}
+
+.cancel-btn:hover,
+.secondary-btn:hover {
+  background: var(--hover);
 }
 
 /* These classes are also used on <a> tags styled to look like buttons - the
@@ -640,7 +720,7 @@ a.secondary-btn {
   display: inline-block;
   border-radius: 6px;
   padding: 8px 14px;
-  font-weight: 600;
+  font-weight: 500;
   font-size: 14px;
   text-decoration: none;
   cursor: pointer;
@@ -715,7 +795,7 @@ a.secondary-btn {
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.35);
+  background: var(--overlay);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -727,8 +807,9 @@ a.secondary-btn {
 }
 
 .modal {
-  background: #fff;
-  border-radius: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
   padding: 20px;
   width: 360px;
   max-width: 90vw;
@@ -840,9 +921,9 @@ a.secondary-btn {
   gap: 8px;
   min-width: 140px;
   padding: 8px 10px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-strong);
   border-radius: 6px;
-  background: #fff;
+  background: var(--surface);
   font: inherit;
   font-size: 14px;
   color: inherit;
@@ -868,10 +949,10 @@ a.secondary-btn {
      not just tight against the edge. */
   max-height: calc(100vh - 160px);
   overflow-y: auto;
-  background: #fff;
+  background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 8px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
   padding: 6px;
 }
 
@@ -897,7 +978,7 @@ a.secondary-btn {
 }
 
 .multiselect-option:hover {
-  background: var(--muted-bg);
+  background: var(--hover);
 }
 
 .multiselect-option input[type="checkbox"] {
@@ -1019,7 +1100,7 @@ a.secondary-btn {
 
 .inline-edit-display:hover {
   border-color: var(--border);
-  background: #fff;
+  background: var(--surface);
 }
 
 .inline-edit-display:focus-visible {
@@ -1168,8 +1249,8 @@ a.secondary-btn {
   padding: 14px 16px;
   margin-bottom: 12px;
   border: 1px solid var(--border);
-  border-radius: 8px;
-  background: #fff;
+  border-radius: var(--radius);
+  background: var(--surface);
 }
 
 .key-card-head {
@@ -1255,4 +1336,309 @@ a.secondary-btn {
 .section-subhead {
   margin: 18px 0 8px;
   font-size: 15px;
+}
+
+/* =====================================================================
+   The new look: pages with <html data-ui="v2"> (see theme-init.js, theme.js).
+   Everything above is shared by every page; these rules only take effect once
+   an app opts in, so apps move over one at a time.
+   ===================================================================== */
+
+:root {
+  --sidebar-w: 224px;
+}
+
+html.nav-collapsed {
+  --sidebar-w: 56px;
+}
+
+/* --- header tools: the theme button and signed-in person, top right --- */
+
+.header-tools {
+  position: absolute;
+  top: 10px;
+  right: 32px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  max-width: calc(100% - 64px);
+}
+
+.header-tools .user-badge {
+  position: static;
+  max-width: none;
+  min-width: 0;
+}
+
+.app-header.has-header-tools {
+  padding-top: 40px;
+}
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+}
+
+.icon-btn:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+
+.icon-btn > span {
+  display: inline-flex;
+}
+
+.icon-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* --- navigation: bottom tab bar on a phone or narrow window, collapsible
+   sidebar from 900px up. Rules are written out for both so the older
+   "top row from 640px" layout above never applies to an opted-in page. --- */
+
+html[data-ui="v2"] body {
+  padding-bottom: calc(var(--nav-height) + env(safe-area-inset-bottom, 0));
+}
+
+html[data-ui="v2"] .app-nav {
+  position: fixed;
+  top: auto;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: auto;
+  max-width: none;
+  min-height: var(--nav-height);
+  margin: 0;
+  padding: 0 0 env(safe-area-inset-bottom, 0);
+  display: flex;
+  flex-direction: row;
+  gap: 0;
+  border: 0;
+  border-top: 1px solid var(--border);
+  border-radius: 0;
+  background: var(--surface);
+  overflow-x: auto;
+}
+
+html[data-ui="v2"] .app-nav-link {
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  padding: 8px 4px 6px;
+  font-size: 11px;
+  border-radius: 0;
+  color: var(--muted);
+}
+
+html[data-ui="v2"] .app-nav-link:hover {
+  background: none;
+  color: var(--text);
+}
+
+html[data-ui="v2"] .app-nav-link.active {
+  background: none;
+  color: var(--accent);
+}
+
+html[data-ui="v2"] .app-nav-group,
+html[data-ui="v2"] .app-nav-group-gap,
+html[data-ui="v2"] .app-nav-collapse {
+  display: none;
+}
+
+@media (max-width: 899px) {
+  html[data-ui="v2"] .nav-count {
+    position: absolute;
+    top: 2px;
+    left: calc(50% + 6px);
+  }
+}
+
+@media (max-width: 480px) {
+  .header-tools {
+    right: 16px;
+    max-width: calc(100% - 32px);
+  }
+}
+
+@media (min-width: 900px) {
+  html[data-ui="v2"] body {
+    padding-bottom: 0;
+    padding-left: var(--sidebar-w);
+    transition: padding-left 0.15s ease;
+  }
+
+  html[data-ui="v2"] .app-nav {
+    top: 0;
+    right: auto;
+    bottom: 0;
+    width: var(--sidebar-w);
+    min-height: 0;
+    padding: 12px 8px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1px;
+    border-top: 0;
+    border-right: 1px solid var(--border);
+    overflow-x: hidden;
+    overflow-y: auto;
+    transition: width 0.15s ease;
+  }
+
+  html[data-ui="v2"] .app-nav-link {
+    flex: none;
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 10px;
+    padding: 7px 10px;
+    font-size: 13.5px;
+    border-radius: 6px;
+    white-space: nowrap;
+  }
+
+  html[data-ui="v2"] .app-nav-link:hover {
+    background: var(--hover);
+  }
+
+  html[data-ui="v2"] .app-nav-link.active {
+    background: var(--hover);
+    color: var(--text);
+  }
+
+  html[data-ui="v2"] .app-nav-link.active .app-nav-icon {
+    color: var(--accent);
+  }
+
+  html[data-ui="v2"] .app-nav-group {
+    display: block;
+    margin: 16px 10px 4px;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  html[data-ui="v2"] .app-nav-group-gap {
+    display: block;
+    height: 1px;
+    margin: 10px 4px;
+    background: var(--border);
+  }
+
+  /* Pinned to the bottom of the sidebar. */
+  html[data-ui="v2"] .app-nav-collapse {
+    display: flex;
+    margin-top: auto;
+  }
+
+  /* Collapsed: icons only (the link's title shows its name on hover). */
+  html.nav-collapsed[data-ui="v2"] .app-nav-label {
+    display: none;
+  }
+
+  html.nav-collapsed[data-ui="v2"] .app-nav-link {
+    justify-content: center;
+    padding: 8px 0;
+  }
+
+  html.nav-collapsed[data-ui="v2"] .app-nav-group {
+    height: 1px;
+    margin: 10px 8px;
+    background: var(--border);
+    font-size: 0;
+    overflow: hidden;
+  }
+
+  html.nav-collapsed[data-ui="v2"] .app-nav-collapse .app-nav-icon {
+    transform: scaleX(-1);
+  }
+
+  /* The count on Invites sits at the end of the label; collapsed it would float. */
+  html.nav-collapsed[data-ui="v2"] .nav-count {
+    display: none;
+  }
+}
+
+/* --- menus: a small button that opens a list of actions (Global.buildMenu).
+   The place for the things a card or header does only now and then - Archive,
+   Export, Delete - so they stop competing with the one thing worth a button. --- */
+
+.menu-wrap {
+  position: relative;
+  display: inline-block;
+}
+
+.menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 70;
+  min-width: 200px;
+  padding: 4px;
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.menu.hidden {
+  display: none;
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 7px 9px;
+  border: 0;
+  border-radius: 5px;
+  background: none;
+  color: var(--text);
+  font-size: 13.5px;
+  font-weight: 400;
+  text-align: left;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.menu-item:hover,
+.menu-item:focus-visible {
+  background: var(--hover);
+}
+
+.menu-item .menu-icon {
+  display: inline-flex;
+  color: var(--muted);
+}
+
+.menu-item .menu-icon svg {
+  width: 15px;
+  height: 15px;
+}
+
+.menu-item.danger {
+  color: var(--danger);
+}
+
+.menu-item.danger .menu-icon {
+  color: var(--danger);
+}
+
+.menu-sep {
+  height: 1px;
+  margin: 4px 0;
+  background: var(--border);
 }
