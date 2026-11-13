@@ -154,6 +154,27 @@ What an opted-in page gets:
 - New icons: sun, moon, theme-auto, panel-left, more, edit, trash, external,
   archive, share, mail, users, plus, copy, map-pin, arrow-right.
 
+### Icons on buttons (the rule)
+
+Every action button carries **one line icon from `icons.js`** in front of its label - never an
+emoji, a text glyph (`+`, `⇣`, a trailing `→`) or nothing. `Global.iconifyButtons` (theme.js)
+does it for you on a page with `<html data-ui="v2">`, once the page loads and again for
+anything a script adds later (cards, panels and modals), so a new button just works:
+
+- **Which buttons:** `.save-btn`, `.cancel-btn`, `.danger-btn`, `.secondary-btn`, `.add-toggle`,
+  `.scrape-btn` (buttons or links), and anything with `data-btn-icon`.
+- **Which icon:** `data-btn-icon="name"` if given; otherwise the label (the `BUTTON_ICON_RULES`
+  list in theme.js: "Save" -> check, "Add ..." -> plus, "Delete" -> trash ...); otherwise the
+  class. A label with no rule logs `[icons] no icon rule for the button "..."` in the console:
+  add a rule or a `data-btn-icon`. `data-btn-icon="none"` opts a button out.
+- **Icon-only buttons** (a close "x", a "<" or ">" in a toolbar): write the glyph as the button's
+  text, add `data-btn-icon="x"` (or `arrow-left`, `arrow-right`, ...) and an `aria-label`; the
+  glyph is swapped for the icon.
+- The icon stays when a script changes the words ("Share" -> "Hide access"), and the same icon is
+  used for that button's entry in a `foldActions` menu.
+- Not action buttons, so left as they are: tabs and segmented toggles (Day / Week / Month), filter
+  chips, accordion headers and dropdown triggers.
+
 Cache note: browsers hold theme.css/js and icons.js for a while - hard-refresh
 (Cmd+Shift+R) after deploying a change to them.
 

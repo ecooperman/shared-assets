@@ -59,6 +59,7 @@
       dismissBtn.className = "page-message-dismiss";
       dismissBtn.setAttribute("aria-label", "Dismiss");
       dismissBtn.textContent = "×";
+      dismissBtn.dataset.btnIcon = "x";
       dismissBtn.addEventListener("click", () => target_el.classList.add("hidden"));
       target_el.appendChild(dismissBtn);
     } else {
@@ -397,6 +398,7 @@
       if (b.textContent.toLowerCase().includes("archive")) return "archive";
       return "sliders"; // never leave a row bare: a menu with some icons and some not looks broken
     };
+    const named = (v) => (v && v !== "auto" && v !== "none" ? v : null);
     const isOffered = offered || ((b) => !b.classList.contains("hidden") && !b.hidden);
     const holder = el("div", { class: "hidden" }, folded);
     const menu = buildMenu({
@@ -409,7 +411,8 @@
           if (!isOffered(button)) continue;
           const item = {
             label: button.textContent.trim(),
-            icon: (icon && icon(button)) || defaultIcon(button),
+            // The icon the button itself carries (see iconifyButtons) keeps the menu entry matching it.
+            icon: (icon && icon(button)) || named(button.getAttribute("data-btn-icon")) || button.dataset.btnIconAuto || defaultIcon(button),
             danger: isDanger(button),
             onclick: () => button.click(),
           };
@@ -990,6 +993,134 @@
     return root;
   }
 
+  // --- icons on action buttons ---------------------------------------------
+  //
+  // The rule: every action button carries one line icon from icons.js in front
+  // of its label - never an emoji, a text glyph (+, ⇣, a trailing arrow) or
+  // nothing at all. Rather than every app remembering to build that markup,
+  // this finds the buttons and adds the icon, on a page with
+  // <html data-ui="v2">: it runs once the page has loaded and again for
+  // anything added later (cards, panels and modals are built by scripts).
+  //
+  // Which buttons: .save-btn, .cancel-btn, .danger-btn, .secondary-btn and
+  // .add-toggle (buttons or links), plus anything marked data-btn-icon. Which
+  // icon: data-btn-icon="name" if given, otherwise the label (BUTTON_ICON_RULES
+  // below), otherwise the class. data-btn-icon="none" opts a button out. A
+  // button with an icon already, an icon-only button, or one holding more than
+  // plain text is left alone. The icon stays when a script later changes the
+  // words ("Share" -> "Hide access").
+  const BUTTON_SELECTOR =
+    "button.save-btn, button.cancel-btn, button.danger-btn, button.secondary-btn, button.add-toggle, button.scrape-btn, " +
+    "a.save-btn, a.cancel-btn, a.danger-btn, a.secondary-btn, a.add-toggle, [data-btn-icon]";
+
+  // First match wins. Written as plain words so adding a case is one line.
+  const BUTTON_ICON_RULES = [
+    [/^leave\b/, "log-out"],
+    [/^(delete|remove)\b/, "trash"],
+    [/^(cancel|close|decline|dismiss|never mind|stop)\b/, "x"],
+    [/^(save|approve|allow|confirm|mark done|done)\b/, "check"],
+    [/^add\b/, "plus"],
+    [/^edit\b/, "edit"],
+    [/^(share|hide access)\b/, "share"],
+    [/^copy link\b/, "link"],
+    [/^(copy|send a copy|hide copy)\b/, "copy"],
+    [/^(email|send)\b/, "mail"],
+    [/^(archive|unarchive)\b/, "archive"],
+    [/^(restore|reopen|undo|reset)\b/, "undo"],
+    [/^import\b/, "upload"],
+    [/^export\b/, "download"],
+    [/^preview\b/, "eye"],
+    [/\bscreenshot\b/, "camera"],
+    [/^(fetch|re-fetch|refresh|reload)\b/, "refresh"],
+    [/^(open|visit|view|compare|go to)\b/, "arrow-right"],
+    [/^generate\b/, "zap"],
+    [/^put on hold\b/, "pause"],
+    [/^back to backlog\b/, "inbox"],
+    [/^enable reminders\b/, "bell"],
+    [/^repeat\b/, "repeat"],
+    [/^request\b/, "mail"],
+    [/^upload\b/, "upload"],
+    [/^(attach|link)\b/, "link"],
+    [/\bcit(y|ies)\b|\bplace\b/, "map-pin"],
+  ];
+  const BUTTON_CLASS_ICONS = [
+    ["save-btn", "check"],
+    ["cancel-btn", "x"],
+    ["danger-btn", "trash"],
+    ["add-toggle", "plus"],
+  ];
+  // What older labels used instead of an icon: a leading "+" or symbol, a
+  // trailing arrow. Stripped when the icon goes in.
+  const LABEL_GLYPHS = /^[\s+−⇣⇡↓↑⚖🔗📷📸📥📤➕]+|[\s→]+$/gu;
+
+  function iconForButton(button, label) {
+    const explicit = button.getAttribute("data-btn-icon");
+    if (explicit && explicit !== "auto") return explicit;
+    if (button.dataset.btnIconAuto) return button.dataset.btnIconAuto;
+    const words = label.toLowerCase();
+    for (const [pattern, icon] of BUTTON_ICON_RULES) if (pattern.test(words)) return icon;
+    for (const [cls, icon] of BUTTON_CLASS_ICONS) if (button.classList.contains(cls)) return icon;
+    return null;
+  }
+
+  const warnedLabels = new Set();
+
+  // A button whose whole label is one of these (a close "×", a "←" / "→") is
+  // icon-only: with data-btn-icon the glyph is swapped for the icon. Give it an
+  // aria-label or title so it still has a name.
+  const GLYPH_ONLY = /^[×✕✖←→↑↓‹›]+$/u;
+
+  function iconifyButton(button) {
+    const explicit = button.getAttribute("data-btn-icon");
+    if (explicit === "none") return;
+    if (button.classList.contains("icon-btn") && !explicit) return;
+    if (button.querySelector(":scope > .btn-icon, :scope > svg, :scope > .menu-icon")) return;
+    // Only plain text: a button holding a badge or other elements is built that way on purpose.
+    if (![...button.childNodes].every((n) => n.nodeType === Node.TEXT_NODE)) return;
+    const raw = button.textContent.trim();
+    if (explicit && explicit !== "auto" && GLYPH_ONLY.test(raw)) {
+      button.dataset.btnIconAuto = explicit;
+      button.replaceChildren(el("span", { class: "btn-icon", "data-icon": explicit, "aria-hidden": "true" }));
+      if (typeof applyIcons === "function") applyIcons(button);
+      return;
+    }
+    const label = raw.replace(LABEL_GLYPHS, "").trim();
+    if (!label) return; // icon-only, or not filled in yet
+    const icon = iconForButton(button, label);
+    if (!icon) {
+      if (!warnedLabels.has(label)) {
+        warnedLabels.add(label);
+        console.warn(`[icons] no icon rule for the button "${label}": add one to BUTTON_ICON_RULES or give it data-btn-icon`);
+      }
+      return;
+    }
+    button.dataset.btnIconAuto = icon;
+    button.replaceChildren(el("span", { class: "btn-icon", "data-icon": icon, "aria-hidden": "true" }), ` ${label}`);
+    if (typeof applyIcons === "function") applyIcons(button);
+  }
+
+  function iconifyButtons(root = document) {
+    if (!isV2()) return;
+    if (root.nodeType === Node.ELEMENT_NODE && root.matches(BUTTON_SELECTOR)) iconifyButton(root);
+    root.querySelectorAll(BUTTON_SELECTOR).forEach(iconifyButton);
+  }
+
+  if (document.documentElement.getAttribute("data-ui") === "v2") {
+    const start = () => {
+      iconifyButtons();
+      new MutationObserver((mutations) => {
+        for (const m of mutations) {
+          if (m.target.nodeType === Node.ELEMENT_NODE && m.target.matches(BUTTON_SELECTOR)) iconifyButton(m.target); // its words were replaced
+          m.addedNodes.forEach((node) => {
+            if (node.nodeType === Node.ELEMENT_NODE) iconifyButtons(node);
+          });
+        }
+      }).observe(document.body, { childList: true, subtree: true });
+    };
+    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start);
+    else start();
+  }
+
   window.Global = {
     el,
     showMessage,
@@ -1006,6 +1137,7 @@
     buildMultiSelect,
     buildMenu,
     foldActions,
+    iconifyButtons,
     askForName,
     showLoading,
     hideLoading,
