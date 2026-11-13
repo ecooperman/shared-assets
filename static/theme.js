@@ -363,7 +363,7 @@
       };
       collapse.addEventListener("click", () => {
         root.classList.toggle("nav-collapsed");
-        writeCookie("nav", root.classList.contains("nav-collapsed") ? "collapsed" : null);
+        writeCookie("nav", root.classList.contains("nav-collapsed") ? "collapsed" : "expanded");
         sync();
       });
       sync();

@@ -13,5 +13,11 @@
   var choice = get("theme"); // "light", "dark", or nothing = match the device
   var dark = choice === "dark" || (choice !== "light" && window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches);
   root.setAttribute("data-theme", dark ? "dark" : "light");
-  if (get("nav") === "collapsed") root.classList.add("nav-collapsed");
+  // The sidebar's state is remembered once the person has chosen ("collapsed" or
+  // "expanded"). Until then a page can ask to start collapsed on a screen narrower
+  // than data-nav-collapse-below pixels (a page that already has a wide panel of
+  // its own, like the time-management planner, would otherwise be squeezed).
+  var nav = get("nav");
+  var below = parseInt(root.getAttribute("data-nav-collapse-below") || "0", 10);
+  if (nav === "collapsed" || (!nav && below && window.innerWidth < below)) root.classList.add("nav-collapsed");
 })();

@@ -145,8 +145,14 @@ What an opted-in page gets:
   is added to the sidebar as a "Theme" entry instead of the top-right corner.
 - An open menu is not clipped by its card (`.item-card` / `.archived-section` allow
   overflow while one of their menus is open).
+- **Start collapsed on narrow screens**: a page that already has a wide panel of its own (the
+  time-management planner) can set `<html data-nav-collapse-below="1300">`: until the person
+  clicks Collapse or Expand once (the `nav` cookie then holds "collapsed" or "expanded"), its
+  sidebar starts collapsed on a screen narrower than that many pixels.
+- **File inputs** (`<input type="file">`) get a themed "Choose file" button, so they no longer
+  show the browser's light grey one in dark mode.
 - New icons: sun, moon, theme-auto, panel-left, more, edit, trash, external,
-  archive, share, mail, users, plus, copy.
+  archive, share, mail, users, plus, copy, map-pin.
 
 Cache note: browsers hold theme.css/js and icons.js for a while - hard-refresh
 (Cmd+Shift+R) after deploying a change to them.
