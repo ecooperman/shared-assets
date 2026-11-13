@@ -1581,6 +1581,13 @@ html[data-ui="v2"] .app-nav-collapse {
   display: inline-block;
 }
 
+/* Cards and collapsible sections clip their contents to their rounded corners;
+   while one of their menus is open that would cut the menu off, so let it out. */
+.item-card:has(.menu:not(.hidden)),
+.archived-section:has(.menu:not(.hidden)) {
+  overflow: visible;
+}
+
 .menu {
   position: absolute;
   top: calc(100% + 4px);
