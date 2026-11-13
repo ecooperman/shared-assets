@@ -361,6 +361,69 @@ input[type="file"]::file-selector-button:hover {
   background: var(--hover);
 }
 
+/* --- the browser's own form controls, drawn to match the theme ---------
+   Left alone, a colour swatch, checkbox, slider or date picker keeps the
+   browser's grey look in both themes (color-scheme above makes the popups and
+   the little icons follow light/dark; the rest is here). An app may still size
+   one for its own layout (a colour swatch in a table row, say). */
+
+input[type="checkbox"],
+input[type="radio"],
+input[type="range"] {
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+/* Colour swatch: a framed square like the other fields, the colour filling it. */
+input[type="color"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 44px;
+  height: 36px;
+  padding: 3px;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  background: var(--surface);
+  cursor: pointer;
+}
+
+input[type="color"]::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+input[type="color"]::-webkit-color-swatch {
+  border: 0;
+  border-radius: 4px;
+}
+
+input[type="color"]::-moz-color-swatch {
+  border: 0;
+  border-radius: 4px;
+}
+
+/* The calendar / clock button inside date and time fields. */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="month"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator,
+input[type="week"]::-webkit-calendar-picker-indicator,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover,
+input[type="month"]::-webkit-calendar-picker-indicator:hover,
+input[type="time"]::-webkit-calendar-picker-indicator:hover,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
+
+/* Search fields: no rounded browser frame; keep the clear (x) button. */
+input[type="search"] {
+  appearance: none;
+  -webkit-appearance: none;
+}
+
 input[type="text"],
 input[type="url"],
 input[type="email"],
@@ -370,6 +433,8 @@ input[type="time"],
 input[type="datetime-local"],
 input[type="tel"],
 input[type="search"],
+input[type="password"],
+input[type="week"],
 input[type="number"],
 textarea,
 select {

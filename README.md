@@ -149,8 +149,11 @@ What an opted-in page gets:
   time-management planner) can set `<html data-nav-collapse-below="1300">`: until the person
   clicks Collapse or Expand once (the `nav` cookie then holds "collapsed" or "expanded"), its
   sidebar starts collapsed on a screen narrower than that many pixels.
-- **File inputs** (`<input type="file">`) get a themed "Choose file" button, so they no longer
-  show the browser's light grey one in dark mode.
+- **The browser's own form controls** are drawn to match the theme in both light and dark:
+  file chooser, colour swatch, checkbox, radio, slider, date / month / time / date-time fields
+  (and their calendar and clock buttons), number, phone, search, password and week fields.
+  Checkboxes, radios and sliders take the app's accent colour. An app may still size one for its
+  own layout (a colour swatch in a table row); the look comes from here.
 - New icons: sun, moon, theme-auto, panel-left, more, edit, trash, external,
   archive, share, mail, users, plus, copy, map-pin, arrow-right.
 
