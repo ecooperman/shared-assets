@@ -588,6 +588,11 @@ label.checkbox-label input {
   color: var(--text);
 }
 
+/* The scripts hide the toggle while its form is open; without this the display above wins over .hidden. */
+.add-toggle.hidden {
+  display: none;
+}
+
 .add-card {
   border: 1px solid var(--border);
   background: var(--surface);
