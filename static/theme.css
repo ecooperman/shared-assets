@@ -241,6 +241,31 @@ button.app-nav-link {
   height: 14px;
 }
 
+/* "Back up one level" link at the top of a page that sits under another one (a list under Lists, a
+   trip under All trips): small and quiet, an arrow-left icon then the parent's name, always going to
+   the fixed parent page. Markup:
+   <a class="back-link" href="/"><span class="btn-icon" data-icon="arrow-left" aria-hidden="true"></span> Lists</a> */
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 12px;
+  font-size: 13px;
+  color: var(--muted);
+  text-decoration: none;
+  border-radius: 4px;
+}
+
+.back-link .btn-icon {
+  vertical-align: 0;
+}
+
+.back-link:hover,
+.back-link:focus-visible {
+  color: var(--text);
+  text-decoration: underline;
+}
+
 /* An icon leading the text of a summary-row badge (a pill): a touch smaller than a
    button's, with a gap before the words. */
 .item-badge .btn-icon {

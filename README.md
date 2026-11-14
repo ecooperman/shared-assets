@@ -189,6 +189,20 @@ anything a script adds later (cards, panels and modals), so a new button just wo
 - Not action buttons, so left as they are: tabs and segmented toggles (Day / Week / Month), filter
   chips, accordion headers and dropdown triggers.
 
+### Back link (up one level)
+
+A page that sits under another one starts with a quiet link to that parent, as a second way up beside
+the sidebar. Put it first inside `<main>`, with the **parent's name** as the label; it always goes to
+the fixed parent page (not the browser's history), so it behaves the same after a refresh or a pasted
+link. `.back-link` (theme.css) styles it; the icon is filled in like any `data-icon`:
+
+```html
+<a class="back-link" href="/"><span class="btn-icon" data-icon="arrow-left" aria-hidden="true"></span> Lists</a>
+```
+
+Top-level pages (the sidebar's own entries) do not get one. If the parent depends on the page (a trip's
+agenda -> that trip), set the `href` from the page's script.
+
 Cache note: browsers hold theme.css/js and icons.js for a while - hard-refresh
 (Cmd+Shift+R) after deploying a change to them.
 
