@@ -13,6 +13,20 @@
   var choice = get("theme"); // "light", "dark", or nothing = match the device
   var dark = choice === "dark" || (choice !== "light" && window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches);
   root.setAttribute("data-theme", dark ? "dark" : "light");
+  // The browser's own chrome (phone status bar, address bar) takes the page background
+  // so it keeps its contrast in dark mode instead of staying the app's fixed colour.
+  // Re-done by theme.js whenever the theme changes.
+  try {
+    var bg = getComputedStyle(root).getPropertyValue("--bg").trim();
+    if (bg) {
+      var metas = document.querySelectorAll('meta[name="theme-color"]');
+      var meta = metas[0] || document.head.appendChild(document.createElement("meta"));
+      meta.setAttribute("name", "theme-color");
+      meta.setAttribute("content", bg);
+      meta.removeAttribute("media");
+      for (var i = 1; i < metas.length; i++) metas[i].parentNode.removeChild(metas[i]);
+    }
+  } catch (e) {}
   // The sidebar's state is remembered once the person has chosen ("collapsed" or
   // "expanded"). Until then a page can ask to start collapsed on a screen narrower
   // than data-nav-collapse-below pixels (a page that already has a wide panel of

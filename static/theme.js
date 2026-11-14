@@ -27,6 +27,19 @@
     return node;
   }
 
+  // A summary-row badge (see .item-badge in theme.css) that leads with an icons.js icon
+  // rather than a text glyph. `text` may be empty for an icon-only badge - then give it a
+  // `title`, which also becomes its accessible name. `extraClass` adds a variant
+  // ("item-badge-warning", ...).
+  function iconBadge(icon, text, extraClass = "", title = null) {
+    const badge = el("span", { class: ("item-badge " + extraClass).trim(), title });
+    badge.appendChild(el("span", { class: "btn-icon", "data-icon": icon, "aria-hidden": "true" }));
+    if (text) badge.append(text);
+    else if (title) badge.setAttribute("aria-label", title);
+    if (typeof applyIcons === "function") applyIcons(badge);
+    return badge;
+  }
+
   // Toast/feedback bar helper. Looks up an element by id (default
   // "page-message", matching theme.css's .page-message) unless an element
   // is passed directly. `kind` is "success" or "error".
@@ -232,6 +245,30 @@
     const choice = themeChoice();
     const dark = choice === "dark" || (choice === "device" && window.matchMedia("(prefers-color-scheme: dark)").matches);
     document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
+    syncThemeColor();
+  }
+
+  // Keeps <meta name="theme-color"> (the phone's status/address bar) on the page background
+  // for the current theme - theme-init.js sets it first, this follows later changes.
+  function syncThemeColor() {
+    if (!isV2()) return;
+    const bg = getComputedStyle(document.documentElement).getPropertyValue("--bg").trim();
+    if (!bg) return;
+    let metas = [...document.querySelectorAll('meta[name="theme-color"]')];
+    if (!metas.length) {
+      const meta = document.createElement("meta");
+      meta.name = "theme-color";
+      document.head.appendChild(meta);
+      metas = [meta];
+    }
+    // A page's own fixed colour (declared after theme-init.js ran) must not fight this one.
+    metas.forEach((meta, i) => {
+      if (i > 0) meta.remove();
+      else {
+        meta.content = bg;
+        meta.removeAttribute("media");
+      }
+    });
   }
 
   function setThemeChoice(choice) {
@@ -245,6 +282,8 @@
       if (themeChoice() === "device") applyTheme();
     });
   }
+
+  syncThemeColor(); // once the page's own markup (a fixed theme-color meta) is in place
 
   // The top-right corner of the page header: the theme button, then (see
   // mountUserBadge) the signed-in person. Made on first use.
@@ -1131,6 +1170,7 @@
 
   window.Global = {
     el,
+    iconBadge,
     showMessage,
     wireAccordionToggle,
     fetchJSON,

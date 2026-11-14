@@ -155,7 +155,15 @@ What an opted-in page gets:
   Checkboxes, radios and sliders take the app's accent colour. An app may still size one for its
   own layout (a colour swatch in a table row); the look comes from here.
 - New icons: sun, moon, theme-auto, panel-left, more, edit, trash, external,
-  archive, share, mail, users, plus, copy, map-pin, arrow-right.
+  archive, share, mail, users, plus, copy, map-pin, arrow-right, alert-triangle, plane.
+
+- **Badges with an icon:** `Global.iconBadge(icon, text, extraClass, title)` builds a summary-row
+  pill (`.item-badge`) that leads with an `icons.js` icon instead of a text glyph (`✈`, `⚠`, `✓`).
+  Leave `text` empty for an icon-only badge and give it a `title` (it becomes the accessible name).
+- **The phone's status / address bar** (`<meta name="theme-color">`) follows the page background
+  for the current theme on v2 pages - set by `theme-init.js` before paint and kept in step by
+  `theme.js` when the theme changes. A page's own fixed `theme-color` is overridden, so apps need
+  not carry one (and should not: a fixed light colour is what made dark mode hard to read).
 
 ### Icons on buttons (the rule)
 

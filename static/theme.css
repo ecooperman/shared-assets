@@ -241,6 +241,18 @@ button.app-nav-link {
   height: 14px;
 }
 
+/* An icon leading the text of a summary-row badge (a pill): a touch smaller than a
+   button's, with a gap before the words. */
+.item-badge .btn-icon {
+  vertical-align: -2px;
+  margin-right: 3px;
+}
+
+.item-badge .btn-icon svg {
+  width: 12px;
+  height: 12px;
+}
+
 .app-nav-link.active {
   color: var(--accent);
 }
