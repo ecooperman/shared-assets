@@ -10,7 +10,11 @@
     var m = document.cookie.match(new RegExp("(?:^|; )" + name + "=([^;]*)"));
     return m ? decodeURIComponent(m[1]) : null;
   }
-  var choice = get("theme"); // "light", "dark", or nothing = match the device
+  var choice = get("theme"); // "light", "dark", "device", or nothing
+  // A page can start light for everyone who has not chosen (<html data-theme-default="light">):
+  // the resume app does, since a dark page could put off a recruiter. Nothing chosen = light
+  // there; "device" (picked with the theme button) still follows the device.
+  if (!choice && root.getAttribute("data-theme-default") === "light") choice = "light";
   var dark = choice === "dark" || (choice !== "light" && window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches);
   root.setAttribute("data-theme", dark ? "dark" : "light");
   // The browser's own chrome (phone status bar, address bar) takes the page background

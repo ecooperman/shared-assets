@@ -160,6 +160,9 @@ What an opted-in page gets:
 - **Badges with an icon:** `Global.iconBadge(icon, text, extraClass, title)` builds a summary-row
   pill (`.item-badge`) that leads with an `icons.js` icon instead of a text glyph (`✈`, `⚠`, `✓`).
   Leave `text` empty for an icon-only badge and give it a `title` (it becomes the accessible name).
+- **Starting light:** `<html data-ui="v2" data-theme-default="light">` makes a page light for anyone
+  who has not chosen a theme (instead of following the device). A choice made with the theme
+  button still wins, and "Match my device" is remembered as `theme=device`. The resume admin uses it.
 - **The phone's status / address bar** (`<meta name="theme-color">`) follows the page background
   for the current theme on v2 pages - set by `theme-init.js` before paint and kept in step by
   `theme.js` when the theme changes. A page's own fixed `theme-color` is overridden, so apps need

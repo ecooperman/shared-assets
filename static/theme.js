@@ -235,9 +235,13 @@
   const THEME_LABELS = { device: "Match my device", light: "Light", dark: "Dark" };
   const THEME_ICONS = { device: "theme-auto", light: "sun", dark: "moon" };
 
+  // A page that starts light for everyone who has not chosen (data-theme-default="light").
+  const startsLight = () => document.documentElement.getAttribute("data-theme-default") === "light";
+
   function themeChoice() {
     const saved = readCookie("theme");
-    return saved === "light" || saved === "dark" ? saved : "device";
+    if (saved === "light" || saved === "dark") return saved;
+    return startsLight() && saved !== "device" ? "light" : "device";
   }
 
   function applyTheme() {
@@ -272,7 +276,8 @@
   }
 
   function setThemeChoice(choice) {
-    writeCookie("theme", choice === "device" ? null : choice);
+    // On a page that starts light, "device" has to be remembered, since no cookie means light there.
+    writeCookie("theme", choice === "device" ? (startsLight() ? "device" : null) : choice);
     applyTheme();
   }
 
