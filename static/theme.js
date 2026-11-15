@@ -365,16 +365,31 @@
   // Calling it again later (e.g. once it is known whether this person is an
   // administrator) replaces the nav already on the page with the new items.
   // An item may also carry `badge: {id, count}`: a small count after its label.
-  function buildNav(items, mountId = "app-nav-mount") {
+  //
+  // Phones: a bottom tab bar can only hold so many entries (about 5 before labels wrap and the
+  // targets crowd the screen edges). `options.barItems` says how many of the LEADING entries stay on
+  // the bar (default: all of them up to 5, else the first 4); the rest go behind a "More" tab that opens
+  // a sheet with the same grouped list the sidebar shows. So put the main destinations first. The More
+  // tab lights up when the current page is one of the rest, and shows the total of their badges. On a
+  // wide screen nothing changes: the sidebar lists everything.
+  function buildNav(items, mountId = "app-nav-mount", options = {}) {
     const mount = document.getElementById(mountId) || document.querySelector("nav.app-nav");
     if (!mount) return;
     const v2 = isV2();
+    const barCount = v2 ? options.barItems ?? (items.length > 5 ? 4 : items.length) : items.length;
+    const moreItems = barCount < items.length;
     const children = [];
+    const moreChildren = []; // the entries behind "More" (kept in order, headings included)
     let group = null;
-    for (const item of items) {
+    items.forEach((item, index) => {
+      const target = index < barCount ? children : moreChildren;
       if (v2 && (item.group || null) !== group) {
         group = item.group || null;
-        children.push(group ? el("div", { class: "app-nav-group", text: group }) : el("div", { class: "app-nav-group-gap" }));
+        target.push(group ? el("div", { class: "app-nav-group", text: group }) : el("div", { class: "app-nav-group-gap" }));
+      } else if (v2 && index === barCount && item.group) {
+        // The sheet starts a new list, so name its first section even when the sidebar continues one
+        // (shown on a phone only).
+        target.push(el("div", { class: "app-nav-group app-nav-group-repeat", text: item.group }));
       }
       const iconSpan = el("span", { class: "app-nav-icon", "data-icon": item.icon, "aria-hidden": "true" });
       const label = el("span", { class: "app-nav-label", text: item.label });
@@ -388,11 +403,59 @@
           })
         );
       }
-      children.push(
+      target.push(
         item.href
           ? el("a", { href: item.href, class: "app-nav-link" + (item.active ? " active" : ""), title: item.label }, content)
           : el("button", { type: "button", class: "app-nav-link", title: item.label, onclick: item.onclick }, content)
       );
+    });
+
+    const nav = el("nav", { class: "app-nav", "aria-label": "Main" }, children);
+    if (moreItems) {
+      const panel = el("div", { class: "app-nav-more-panel", id: "app-nav-more-panel" }, moreChildren);
+      const moreBadge = el("span", { class: "item-badge item-badge-accent nav-count hidden" });
+      const more = el("button", {
+        type: "button",
+        class: "app-nav-link app-nav-more",
+        title: "More",
+        "aria-haspopup": "true",
+        "aria-expanded": "false",
+        "aria-controls": "app-nav-more-panel",
+      }, [
+        el("span", { class: "app-nav-icon", "data-icon": "more", "aria-hidden": "true" }),
+        el("span", { class: "app-nav-label", text: "More" }),
+        moreBadge,
+      ]);
+      const setOpen = (open) => {
+        nav.classList.toggle("more-open", open);
+        more.setAttribute("aria-expanded", String(open));
+      };
+      more.addEventListener("click", (e) => {
+        e.stopPropagation();
+        setOpen(!nav.classList.contains("more-open"));
+      });
+      // The tab shows where you are and what is waiting inside it.
+      const syncMore = () => {
+        more.classList.toggle("active", !!panel.querySelector(".app-nav-link.active"));
+        const total = [...panel.querySelectorAll(".nav-count:not(.hidden)")].reduce((n, c) => n + (parseInt(c.textContent, 10) || 0), 0);
+        moreBadge.textContent = String(total);
+        moreBadge.classList.toggle("hidden", !total);
+      };
+      new MutationObserver(syncMore).observe(panel, { subtree: true, childList: true, characterData: true, attributes: true });
+      syncMore();
+      document.addEventListener("click", (e) => {
+        if (nav.classList.contains("more-open") && !panel.contains(e.target)) setOpen(false);
+      });
+      nav.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && nav.classList.contains("more-open")) {
+          setOpen(false);
+          more.focus();
+        }
+      });
+      panel.addEventListener("click", (e) => {
+        if (e.target.closest(".app-nav-link")) setOpen(false); // a link navigates; a button (Refresh) just acts
+      });
+      nav.append(panel, more);
     }
     if (v2) {
       const root = document.documentElement;
@@ -412,9 +475,8 @@
         sync();
       });
       sync();
-      children.push(collapse);
+      nav.appendChild(collapse);
     }
-    const nav = el("nav", { class: "app-nav", "aria-label": "Main" }, children);
     mount.replaceWith(nav);
     if (typeof applyIcons === "function") applyIcons(nav);
     mountThemeToggle();

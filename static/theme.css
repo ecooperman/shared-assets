@@ -641,6 +641,7 @@ label.checkbox-label input {
 .list-count {
   color: var(--muted);
   font-size: 13px;
+  white-space: nowrap;
 }
 
 .item-list {
@@ -1600,6 +1601,93 @@ html[data-ui="v2"] .app-nav-collapse {
     position: absolute;
     top: 2px;
     left: calc(50% + 6px);
+  }
+}
+
+/* --- the "More" tab and its sheet (see Global.buildNav's barItems) ---
+   On a wide screen the entries behind More simply sit in the sidebar, so the panel dissolves
+   (display: contents) and the tab is not shown. On a phone the panel is a sheet above the bar. */
+html[data-ui="v2"] .app-nav-more-panel {
+  display: contents;
+}
+
+html[data-ui="v2"] .app-nav-more,
+html[data-ui="v2"] .app-nav .app-nav-group-repeat {
+  display: none;
+}
+
+@media (max-width: 899px) {
+  html[data-ui="v2"] .app-nav-more {
+    display: flex;
+    position: relative;
+  }
+
+  html[data-ui="v2"] .app-nav-more-panel {
+    display: none;
+    position: fixed;
+    left: 8px;
+    right: 8px;
+    bottom: calc(var(--nav-height) + env(safe-area-inset-bottom, 0px) + 8px);
+    max-height: 65vh;
+    overflow-y: auto;
+    flex-direction: column;
+    gap: 2px;
+    padding: 6px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+    z-index: 60;
+  }
+
+  html[data-ui="v2"] .app-nav.more-open .app-nav-more-panel {
+    display: flex;
+  }
+
+  /* Rows like a menu: icon then label, a comfortable 44px+ tap target. */
+  html[data-ui="v2"] .app-nav-more-panel .app-nav-link {
+    flex: none;
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 12px;
+    width: 100%;
+    padding: 12px;
+    font-size: 15px;
+    text-align: left;
+    white-space: nowrap;
+    border-radius: 8px;
+    color: var(--text);
+  }
+
+  html[data-ui="v2"] .app-nav-more-panel .app-nav-link:hover {
+    background: var(--hover);
+  }
+
+  html[data-ui="v2"] .app-nav-more-panel .app-nav-link.active {
+    color: var(--accent);
+  }
+
+  html[data-ui="v2"] .app-nav-more-panel .app-nav-group,
+  html[data-ui="v2"] .app-nav-more-panel .app-nav-group-repeat {
+    display: block;
+    padding: 8px 12px 2px;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  html[data-ui="v2"] .app-nav-more-panel .app-nav-group-gap {
+    display: block;
+    height: 1px;
+    margin: 4px 6px;
+    background: var(--border);
+  }
+
+  /* A count inside the sheet sits at the row's end, not over a tab icon. */
+  html[data-ui="v2"] .app-nav-more-panel .nav-count {
+    position: static;
+    margin-left: auto;
   }
 }
 

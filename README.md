@@ -130,6 +130,11 @@ What an opted-in page gets:
   `badge: {id, count}` adds a count. Calling `buildNav` again replaces the nav (used
   once it is known whether the person is an administrator). The sidebar is also where
   links to other apps and the planned dashboard go.
+  **On a phone** a bottom bar holds about 5 tabs, so `Global.buildNav(items, mountId, {barItems: 3})`
+  keeps the first 3 entries on the bar and puts the rest behind a **More** tab that opens a sheet
+  (grouped like the sidebar; the tab lights up when the current page is one of them and shows the
+  total of their badges). The default is all entries when there are 5 or fewer, else the first 4, so
+  list the main destinations first. Nothing changes from 900px up.
 - **`Global.buildMenu({icon, label, ariaLabel, items, align})`**: a button that opens a
   menu of actions (`.menu`, `.menu-item`, `.menu-sep`, `.danger`), closed by an outside
   click, Escape or choosing an item. Items may be a function (re-evaluated on open).
