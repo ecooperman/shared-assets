@@ -657,6 +657,7 @@
   // The signed-in person's email and a Log out link, in the top corner of the
   // page header (theme.css's .user-badge). Log out ends their Cloudflare
   // Access session for this app; the next visit asks them to sign in again.
+  // An app with its own sign-in (shared_python.oidc_login) says so with `logout_url` in /api/me.
   // Does nothing when there's no user. Call once per page, after the DOM exists.
   // Pass { profileHref } (an app with a Profile page) to make the email a link to it.
   async function mountUserBadge(target = document.querySelector(".app-header"), { profileHref = null } = {}) {
@@ -676,7 +677,7 @@
     }
     const badge = el("div", { class: "user-badge" }, [
       el(user && profileHref ? "a" : "span", emailAttrs),
-      el("a", { class: "user-badge-logout", href: "/cdn-cgi/access/logout", text: "Log out" }),
+      el("a", { class: "user-badge-logout", href: (user && user.logout_url) || "/cdn-cgi/access/logout", text: "Log out" }),
     ]);
     const tools = isV2() && target === document.querySelector(".app-header") ? headerTools() : null;
     if (tools) {
