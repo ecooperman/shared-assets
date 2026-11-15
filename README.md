@@ -160,7 +160,7 @@ What an opted-in page gets:
   Checkboxes, radios and sliders take the app's accent colour. An app may still size one for its
   own layout (a colour swatch in a table row); the look comes from here.
 - New icons: sun, moon, theme-auto, panel-left, more, edit, trash, external,
-  archive, share, mail, users, plus, copy, map-pin, arrow-right, alert-triangle, plane.
+  archive, share, mail, users, plus, copy, map-pin, arrow-right, alert-triangle, plane, help.
 
 - **Badges with an icon:** `Global.iconBadge(icon, text, extraClass, title)` builds a summary-row
   pill (`.item-badge`) that leads with an `icons.js` icon instead of a text glyph (`✈`, `⚠`, `✓`).
