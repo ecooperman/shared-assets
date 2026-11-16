@@ -127,7 +127,9 @@ What an opted-in page gets:
 - **Logo**: a brass-gears mark (steampunk) in front of the title in `.app-header h1`, drawn inline
   by `mountLogo` in `theme.js` (so it needs no request and works in both themes) and styled by
   `.app-logo` in `theme.css`. The same drawing is `logo.svg`, for favicons or anywhere else
-  (`<link rel="icon" type="image/svg+xml" href="{{ shared_assets_base }}/logo.svg">`). A page with
+  (`<link rel="icon" type="image/svg+xml" href="{{ shared_assets_base }}/logo.svg">`), with `favicon.png` (64px) as the fallback for browsers that
+  don't draw SVG tab icons; every app's templates already link both. Home-screen (PWA) icons stay per app on purpose, so each app is
+  recognisable on a phone. A page with
   no `.app-header h1` (the time-management planner) shows none. Change the drawing in both places.
 - **Sidebar nav**: `Global.buildNav` renders a collapsible sidebar from 900px up
   (collapsed state is the shared `nav` cookie) and the old bottom tab bar below that.
