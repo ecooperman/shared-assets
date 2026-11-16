@@ -124,6 +124,11 @@ What an opted-in page gets:
   button at the top right of the header (`Global.mountThemeToggle`, added by
   `Global.buildNav`). The choice is a cookie on `.evancooperman.com` (`theme`), so it
   follows the person across apps. `Global.themeChoice()` / `setThemeChoice()`.
+- **Logo**: a brass-gears mark (steampunk) in front of the title in `.app-header h1`, drawn inline
+  by `mountLogo` in `theme.js` (so it needs no request and works in both themes) and styled by
+  `.app-logo` in `theme.css`. The same drawing is `logo.svg`, for favicons or anywhere else
+  (`<link rel="icon" type="image/svg+xml" href="{{ shared_assets_base }}/logo.svg">`). A page with
+  no `.app-header h1` (the time-management planner) shows none. Change the drawing in both places.
 - **Sidebar nav**: `Global.buildNav` renders a collapsible sidebar from 900px up
   (collapsed state is the shared `nav` cookie) and the old bottom tab bar below that.
   An item's optional `group` ("Setup", "Admin") starts a titled section, and
