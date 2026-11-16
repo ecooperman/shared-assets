@@ -112,6 +112,15 @@ body:has(main.wide) .app-header {
   vertical-align: -10px;
 }
 
+.app-header h1 a.app-logo {
+  text-decoration: none;
+  transition: opacity 0.12s;
+}
+
+.app-header h1 a.app-logo:hover {
+  opacity: 0.8;
+}
+
 .app-header h1 .app-logo svg {
   display: block;
   width: 100%;

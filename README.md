@@ -131,6 +131,9 @@ What an opted-in page gets:
   don't draw SVG tab icons; every app's templates already link both. Home-screen (PWA) icons stay per app on purpose, so each app is
   recognisable on a phone. A page with
   no `.app-header h1` (the time-management planner) shows none. Change the drawing in both places.
+- **Way back to the dashboard**: `Global.buildNav` adds a **Dashboard** entry (home icon, just before Refresh) to every app's
+  menu, and the header logo links there too (`dashboardUrl()` in `theme.js` picks `dashboard.evancooperman.com`, or
+  `localhost:8090` locally, and nothing on the dashboard itself). No app needs to list it. On a phone it sits behind More.
 - **Sidebar nav**: `Global.buildNav` renders a collapsible sidebar from 900px up
   (collapsed state is the shared `nav` cookie) and the old bottom tab bar below that.
   An item's optional `group` ("Setup", "Admin") starts a titled section, and

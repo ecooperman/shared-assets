@@ -372,9 +372,29 @@
   // a sheet with the same grouped list the sidebar shows. So put the main destinations first. The More
   // tab lights up when the current page is one of the rest, and shows the total of their badges. On a
   // wide screen nothing changes: the sidebar lists everything.
+  // Where the Brassworks dashboard (the front door and landing page for every app) lives from the page we
+  // are on, or null on the dashboard itself and anywhere that isn't one of the apps.
+  function dashboardUrl() {
+    const host = location.hostname;
+    if (host === "dashboard.evancooperman.com") return null;
+    if (host.endsWith(".evancooperman.com")) return "https://dashboard.evancooperman.com/";
+    if (host === "localhost" || host === "127.0.0.1") return location.port === "8090" ? null : "http://localhost:8090/";
+    return null;
+  }
+
+  // Every app's menu ends with a way back to the dashboard (just before the Refresh action when there is one).
+  function withDashboard(items) {
+    const url = dashboardUrl();
+    if (!url || items.some((item) => item.href === url)) return items;
+    const entry = { href: url, icon: "home", label: "Dashboard" };
+    const at = items.findIndex((item) => !item.href && item.label === "Refresh");
+    return at < 0 ? [...items, entry] : [...items.slice(0, at), entry, ...items.slice(at)];
+  }
+
   function buildNav(items, mountId = "app-nav-mount", options = {}) {
     const mount = document.getElementById(mountId) || document.querySelector("nav.app-nav");
     if (!mount) return;
+    if (isV2()) items = withDashboard(items);
     const v2 = isV2();
     const barCount = v2 ? options.barItems ?? (items.length > 5 ? 4 : items.length) : items.length;
     const moreItems = barCount < items.length;
@@ -1227,7 +1247,11 @@
   function mountLogo() {
     const title = document.querySelector(".app-header h1");
     if (!title || title.querySelector(".app-logo")) return;
-    const mark = el("span", { class: "app-logo" });
+    // The logo is also a way back to the dashboard (on every app but the dashboard itself).
+    const home = dashboardUrl();
+    const mark = home
+      ? el("a", { class: "app-logo", href: home, title: "Brassworks dashboard", "aria-label": "Brassworks dashboard" })
+      : el("span", { class: "app-logo" });
     mark.innerHTML = LOGO_SVG; // a constant above, never page or user text
     title.prepend(mark);
   }
