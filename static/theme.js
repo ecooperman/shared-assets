@@ -1273,6 +1273,27 @@
     else start();
   }
 
+  // Suggest addresses in an email box as the person types (the browser's own <datalist> narrows the list to
+  // what matches). `url` returns a JSON array of emails. Returns a function that reloads them (call it after
+  // adding someone, so they drop off the list). Suggestions are a nicety: a failed load just means none.
+  let emailSuggestionLists = 0;
+  function suggestEmails(input, url) {
+    const list = el("datalist", { id: `email-suggestions-${++emailSuggestionLists}` });
+    input.setAttribute("list", list.id);
+    document.body.appendChild(list);
+    async function refresh() {
+      let emails = [];
+      try {
+        emails = await fetchJSON(url);
+      } catch (err) {
+        emails = [];
+      }
+      list.replaceChildren(...emails.map((email) => el("option", { value: email })));
+    }
+    refresh();
+    return refresh;
+  }
+
   window.Global = {
     el,
     iconBadge,
@@ -1292,6 +1313,7 @@
     foldActions,
     iconifyButtons,
     askForName,
+    suggestEmails,
     showLoading,
     hideLoading,
     withLoading,
