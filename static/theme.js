@@ -1273,9 +1273,10 @@
     else start();
   }
 
-  // Suggest addresses in an email box as the person types (the browser's own <datalist> narrows the list to
-  // what matches). `url` returns a JSON array of emails. Returns a function that reloads them (call it after
-  // adding someone, so they drop off the list). Suggestions are a nicety: a failed load just means none.
+  // Suggest people in an email box as the person types (the browser's own <datalist> narrows the list to
+  // what matches). `url` returns a JSON array of {email, name} (a bare email string works too); the box gets the
+  // email and the name is shown beside it so people are easy to tell apart. Returns a function that reloads them
+  // (call it after adding someone, so they drop off the list). A failed load just means no suggestions.
   let emailSuggestionLists = 0;
   function suggestEmails(input, url) {
     const list = el("datalist", { id: `email-suggestions-${++emailSuggestionLists}` });
@@ -1288,7 +1289,14 @@
       } catch (err) {
         emails = [];
       }
-      list.replaceChildren(...emails.map((email) => el("option", { value: email })));
+      list.replaceChildren(
+        ...emails.map((person) => {
+          const who = typeof person === "string" ? { email: person, name: "" } : person;
+          const option = el("option", { value: who.email });
+          if (who.name) option.label = who.name; // shown beside the address; typing a name matches it too
+          return option;
+        })
+      );
     }
     refresh();
     return refresh;
