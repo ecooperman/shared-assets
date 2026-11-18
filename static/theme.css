@@ -1335,6 +1335,74 @@ a.secondary-btn {
   width: auto;
 }
 
+/* The suggestion dropdown under an email box (Global.suggest in theme.js). Floats over the page, so no card or modal clips it. */
+.suggest-list {
+  position: fixed;
+  z-index: 200;
+  overflow-y: auto;
+  padding: 4px;
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.suggest-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 9px;
+  border-radius: 5px;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.suggest-option.is-active {
+  background: var(--hover);
+}
+
+.suggest-avatar {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--accent-bg);
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.suggest-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.suggest-title,
+.suggest-detail {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.suggest-title {
+  font-size: 14px;
+}
+
+.suggest-detail {
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+/* A finger needs more room than a pointer. */
+@media (hover: none), (pointer: coarse) {
+  .suggest-option {
+    padding: 10px 9px;
+  }
+}
+
 .invite-prompt {
   display: flex;
   align-items: center;

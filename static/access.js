@@ -22,7 +22,6 @@
 //   access.reload();                      // refetch (e.g. when its panel opens)
 
 const Access = (() => {
-  let panels = 0; // gives each panel's suggestion list its own id
   const ROLE_LABELS = { owner: "Owner", edit: "Can edit", view: "Can view" };
 
   function mount(container, { api, noun = "list", name, onMembers = () => {}, hint: hintText }) {
@@ -38,30 +37,23 @@ const Access = (() => {
 
     // Suggestions for the box: people this person has shared with or asked for
     // before (the server decides who), minus anyone already on this thing.
-    const suggestions = Global.el("datalist", { id: `access-people-${++panels}` });
+    // (The dropdown asks for the list each time it opens, so it is always current.) The server may send bare addresses or
+    // {email, name}; a name is shown with the address.
     let people = [];
     const taken = { members: new Set(), invites: new Set() };
-    function showSuggestions() {
-      suggestions.replaceChildren(
-        ...people
-          .filter((email) => !taken.members.has(email) && !taken.invites.has(email))
-          .map((email) => Global.el("option", { value: email }))
-      );
-    }
+    const emailOf = (person) => (typeof person === "string" ? person : person.email).toLowerCase();
     async function loadPeople() {
       try {
-        people = (await Global.fetchJSON("/api/me/people")).map((email) => email.toLowerCase());
+        people = await Global.fetchJSON("/api/me/people");
       } catch (err) {
         people = []; // suggestions are a nicety: the box works without them
       }
-      showSuggestions();
     }
 
     const emailInput = Global.el("input", {
       type: "email",
       placeholder: "Email address",
       autocomplete: "off",
-      list: suggestions.id,
       // This is not a sign-in field: keep password managers (1Password, LastPass,
       // Bitwarden) from attaching their own menu over the suggestions.
       "data-1p-ignore": "",
@@ -69,6 +61,12 @@ const Access = (() => {
       "data-bwignore": "true",
       "data-form-type": "other",
       "aria-label": "Email address to give access to",
+    });
+    Global.suggest(emailInput, {
+      items: () =>
+        people
+          .filter((person) => !taken.members.has(emailOf(person)) && !taken.invites.has(emailOf(person)))
+          .map((person) => Global.personSuggestion(typeof person === "string" ? person.toLowerCase() : person)),
     });
     const roleSelect = Global.el(
       "select",
@@ -90,7 +88,7 @@ const Access = (() => {
           `Viewers can read this ${noun}; editors can also change what's in it. Only you can change who has access.`,
     });
 
-    container.replaceChildren(memberList, inviteList, addRow, suggestions, prompt, hint);
+    container.replaceChildren(memberList, inviteList, addRow, prompt, hint);
 
     function hidePrompt() {
       prompt.classList.add("hidden");
@@ -116,7 +114,6 @@ const Access = (() => {
       }
       onMembers(members);
       taken.members = new Set(members.map((m) => m.email.toLowerCase()));
-      showSuggestions();
       memberList.replaceChildren(
         ...members.map((member) => {
           const row = Global.el("div", { class: "member-row" }, [Global.el("span", { class: "member-email", text: member.email })]);
@@ -167,7 +164,6 @@ const Access = (() => {
         return;
       }
       taken.invites = new Set(invites.map((i) => i.email.toLowerCase()));
-      showSuggestions();
       inviteList.replaceChildren(
         ...invites.map((invite) => {
           const pending = invite.status === "pending";

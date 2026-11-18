@@ -1273,30 +1273,174 @@
     else start();
   }
 
-  // Suggest people in an email box as the person types (the browser's own <datalist> narrows the list to
-  // what matches). `url` returns a JSON array of {email, name} (a bare email string works too); the box gets the
-  // email and the name is shown beside it so people are easy to tell apart. Returns a function that reloads them
-  // (call it after adding someone, so they drop off the list). A failed load just means no suggestions.
-  let emailSuggestionLists = 0;
-  function suggestEmails(input, url) {
-    const list = el("datalist", { id: `email-suggestions-${++emailSuggestionLists}` });
-    input.setAttribute("list", list.id);
-    document.body.appendChild(list);
-    async function refresh() {
-      let emails = [];
-      try {
-        emails = await fetchJSON(url);
-      } catch (err) {
-        emails = [];
+  // A suggestion dropdown for a text box, drawn by us (the browser's own <datalist> menu can't be styled and looks different in
+  // every browser). `items()` returns what to offer right now, as [{value, title?, detail?, ...anything}]: `value` is what goes in
+  // the box when one is picked, `title` (default: the value) is the bold line and `detail` the small grey one under it; typing
+  // narrows the list by any of the three (starts-with first). Keyboard: Up/Down move, Enter picks (only once one is highlighted,
+  // so Enter in the box still does what it did), Escape or Tab closes. Mouse and touch: click or tap a row. The list floats
+  // above the page (so no card or modal clips it) and flips above the box when there is no room below. `onPick(item)` runs after
+  // the box is filled. Returns {close}. Styles: `.suggest-*` in theme.css.
+  let suggestLists = 0;
+  function suggest(input, { items, onPick = () => {}, limit = 8 }) {
+    const id = `suggest-${++suggestLists}`;
+    let list = null;
+    let shown = [];
+    let active = -1;
+    input.removeAttribute("list"); // never both: a leftover datalist would draw the browser's menu on top
+    input.setAttribute("role", "combobox");
+    input.setAttribute("aria-autocomplete", "list");
+    input.setAttribute("aria-haspopup", "listbox");
+    input.setAttribute("aria-expanded", "false");
+
+    function matches() {
+      const query = input.value.trim().toLowerCase();
+      const ranked = [];
+      for (const item of items()) {
+        let rank = query ? null : 1;
+        for (const text of [item.value, item.title, item.detail]) {
+          const lower = (text || "").toLowerCase();
+          if (query && lower.startsWith(query)) rank = 0;
+          else if (query && lower.includes(query) && rank !== 0) rank = 1;
+        }
+        if (rank !== null) ranked.push({ rank, item });
+      }
+      ranked.sort((a, b) => a.rank - b.rank); // stable: people keep the order they were given in
+      return ranked.slice(0, limit).map((r) => r.item);
+    }
+
+    function close() {
+      if (list) list.remove();
+      list = null;
+      shown = [];
+      active = -1;
+      input.setAttribute("aria-expanded", "false");
+      input.removeAttribute("aria-controls");
+      input.removeAttribute("aria-activedescendant");
+    }
+
+    function place() {
+      if (!list) return;
+      if (!input.isConnected) return close();
+      const box = input.getBoundingClientRect();
+      const room = (window.visualViewport ? window.visualViewport.height : window.innerHeight) - box.bottom - 12;
+      list.style.left = `${box.left}px`;
+      list.style.width = `${box.width}px`;
+      list.style.maxHeight = `${Math.max(120, Math.min(320, room))}px`;
+      const height = list.offsetHeight;
+      const above = box.top - 12;
+      const flip = room < height && above > room; // not enough room below, and more above
+      if (flip) list.style.maxHeight = `${Math.min(320, above)}px`;
+      list.style.top = `${flip ? box.top - 4 - list.offsetHeight : box.bottom + 4}px`;
+    }
+
+    function setActive(index) {
+      active = index;
+      [...list.children].forEach((row, i) => {
+        row.classList.toggle("is-active", i === index);
+        row.setAttribute("aria-selected", i === index ? "true" : "false");
+      });
+      if (index >= 0) {
+        input.setAttribute("aria-activedescendant", `${id}-${index}`);
+        list.children[index].scrollIntoView({ block: "nearest" });
+      } else {
+        input.removeAttribute("aria-activedescendant");
+      }
+    }
+
+    let picking = false;
+    function pick(item) {
+      input.value = item.value;
+      close();
+      picking = true;
+      input.dispatchEvent(new Event("input", { bubbles: true })); // for anything listening for a change (it must not reopen us)
+      picking = false;
+      onPick(item);
+    }
+
+    function open() {
+      shown = matches();
+      const only = shown.length === 1 && shown[0].value.toLowerCase() === input.value.trim().toLowerCase();
+      if (!shown.length || only) return close(); // nothing to offer, or what is typed is already the one
+      if (!list) {
+        list = el("div", { class: "suggest-list", role: "listbox", id });
+        list.addEventListener("mousedown", (e) => e.preventDefault()); // keep the focus in the box
+        document.body.appendChild(list);
       }
       list.replaceChildren(
-        ...emails.map((person) => {
-          const who = typeof person === "string" ? { email: person, name: "" } : person;
-          const option = el("option", { value: who.email });
-          if (who.name) option.label = who.name; // shown beside the address; typing a name matches it too
-          return option;
+        ...shown.map((item, i) => {
+          const title = item.title || item.value;
+          const row = el("div", { class: "suggest-option", role: "option", id: `${id}-${i}`, "aria-selected": "false" }, [
+            el("span", { class: "suggest-avatar", "aria-hidden": "true", text: (title.trim()[0] || "?").toUpperCase() }),
+            el("span", { class: "suggest-text" }, [
+              el("span", { class: "suggest-title", text: title }),
+              ...(item.detail ? [el("span", { class: "suggest-detail", text: item.detail })] : []),
+            ]),
+          ]);
+          row.addEventListener("click", () => pick(item));
+          row.addEventListener("mousemove", () => active !== i && setActive(i));
+          return row;
         })
       );
+      active = -1;
+      input.setAttribute("aria-expanded", "true");
+      input.setAttribute("aria-controls", id);
+      input.removeAttribute("aria-activedescendant");
+      place();
+    }
+
+    input.addEventListener("input", () => !picking && open());
+    input.addEventListener("focus", open);
+    input.addEventListener("blur", close);
+    input.addEventListener(
+      "keydown",
+      (e) => {
+        if (!list) {
+          if (e.key === "ArrowDown") open();
+          return;
+        }
+        if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+          e.preventDefault();
+          const step = e.key === "ArrowDown" ? 1 : -1;
+          setActive(active < 0 ? (step > 0 ? 0 : shown.length - 1) : (active + step + shown.length) % shown.length);
+        } else if (e.key === "Enter" && active >= 0) {
+          e.preventDefault();
+          e.stopImmediatePropagation(); // picking is not also "Add"
+          pick(shown[active]);
+        } else if (e.key === "Escape") {
+          e.stopPropagation(); // closes the list, not a modal around the box
+          close();
+        } else if (e.key === "Tab") {
+          close();
+        }
+      },
+      true
+    );
+    window.addEventListener("resize", place);
+    window.addEventListener("scroll", place, true);
+    if (window.visualViewport) window.visualViewport.addEventListener("resize", place);
+    return { close };
+  }
+
+  // The people to offer, as suggest() items: the name in bold with the address under it, or just the address when there is no name.
+  // `person` is {email, name?} (or a bare email string).
+  function personSuggestion(person) {
+    const who = typeof person === "string" ? { email: person, name: "" } : person;
+    return who.name ? { value: who.email, title: who.name, detail: who.email, person: who } : { value: who.email, title: who.email, person: who };
+  }
+
+  // Suggest people in an email box as the person types. `url` returns a JSON array of {email, name} (a bare email string works
+  // too); the box gets the email and the name is shown with it so people are easy to tell apart (typing a name matches it too).
+  // Returns a function that reloads them (call it after adding someone, so they drop off the list). A failed load just means no
+  // suggestions.
+  function suggestEmails(input, url) {
+    let people = [];
+    suggest(input, { items: () => people.map(personSuggestion) });
+    async function refresh() {
+      try {
+        people = await fetchJSON(url);
+      } catch (err) {
+        people = [];
+      }
     }
     refresh();
     return refresh;
@@ -1321,6 +1465,8 @@
     foldActions,
     iconifyButtons,
     askForName,
+    suggest,
+    personSuggestion,
     suggestEmails,
     showLoading,
     hideLoading,
