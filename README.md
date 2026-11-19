@@ -131,7 +131,10 @@ What an opted-in page gets:
   by `mountLogo` in `theme.js` (so it needs no request and works in both themes) and styled by
   `.app-logo` in `theme.css`. The same drawing is `logo.svg`, for favicons or anywhere else
   (`<link rel="icon" type="image/svg+xml" href="{{ shared_assets_base }}/logo.svg">`), with `favicon.png` (64px) as the fallback for browsers that
-  don't draw SVG tab icons; every app's templates already link both. Home-screen (PWA) icons stay per app on purpose, so each app is
+  don't draw SVG tab icons. **The tab icon needs no tags on a page:** `theme-init.js` (already in every page's head) adds both links
+  once the head is read, taking the address from its own URL, and leaves a page that links its own icon alone. So a new page gets the
+  favicon just by loading `theme-init.js`; the icon links most templates still carry are redundant but harmless. Pages that don't
+  load `theme-init.js` (the resume's baked public pages and cover letters) link the two files themselves. Home-screen (PWA) icons stay per app on purpose, so each app is
   recognisable on a phone. A page with
   no `.app-header h1` (the time-management planner) shows none. Change the drawing in both places.
 - **Way back to the dashboard**: `Global.buildNav` adds a **Dashboard** entry (home icon, just before Refresh) to every app's

@@ -3,6 +3,34 @@
 // theme). Only does anything on a page that opted in with <html data-ui="v2">;
 // every other page stays as it was. The choices live in cookies on
 // .evancooperman.com, so one choice covers every app (theme.js sets them).
+//
+// Also the one place the tab icon (favicon) comes from: the brass-gears logo, on every page that loads this script, so a new page
+// needs no icon tags of its own (see "Tab icon" below).
+(function () {
+  // Tab icon. Added once the head has been read, so a page that already links its own icon is left alone and never gets two. The
+  // address comes from this script's own URL, so it follows whichever shared-assets host the page uses (local or production).
+  var self = document.currentScript;
+  if (self && self.src) {
+    var base = self.src.split("?")[0].replace(/[^\/]*$/, "");
+    var addIcons = function () {
+      if (document.querySelector('link[rel~="icon"]')) return;
+      var svg = document.createElement("link");
+      svg.rel = "icon";
+      svg.type = "image/svg+xml";
+      svg.href = base + "logo.svg";
+      var png = document.createElement("link"); // for browsers that don't draw SVG tab icons
+      png.rel = "icon";
+      png.type = "image/png";
+      png.sizes = "64x64";
+      png.href = base + "favicon.png";
+      document.head.appendChild(svg);
+      document.head.appendChild(png);
+    };
+    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", addIcons);
+    else addIcons();
+  }
+})();
+
 (function () {
   var root = document.documentElement;
   if (root.getAttribute("data-ui") !== "v2") return;
