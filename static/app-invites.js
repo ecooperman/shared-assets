@@ -16,13 +16,14 @@
 //     appName: "Lists",                  // used in the wording
 //     api: "/api/app-invites",           // optional, this is the default
 //     onChange: () => { ... },           // after a request is made or withdrawn
+//     afterApproval: "...",              // optional: the closing sentence of the hint, for an app where "shared" does not apply
 //   });
 //   invites.reload();
 
 const AppInvites = (() => {
   const STATUS_TEXT = { pending: "Awaiting approval", approved: "Approved", declined: "Declined" };
 
-  function mount(container, { appName, api = "/api/app-invites", onChange = () => {} }) {
+  function mount(container, { appName, api = "/api/app-invites", onChange = () => {}, afterApproval = "Nothing is shared with them until you share it." }) {
     const send = (url, method, body) =>
       Global.fetchJSON(url, {
         method,
@@ -48,7 +49,7 @@ const AppInvites = (() => {
     const mine = Global.el("div", { class: "member-list" });
     const hint = Global.el("p", {
       class: "field-hint",
-      text: `Ask for someone who can't sign in to ${appName} yet to be let in. An administrator approves each request, and they get an email saying how to sign in. Nothing is shared with them until you share it.`,
+      text: `Ask for someone who can't sign in to ${appName} yet to be let in. An administrator approves each request, and they get an email saying how to sign in. ${afterApproval}`,
     });
 
     container.replaceChildren(hint, addRow, problem, left, Global.el("h3", { class: "section-subhead", text: "Your requests" }), mine);
