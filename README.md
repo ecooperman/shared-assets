@@ -231,11 +231,11 @@ The list comes from one place, the dashboard's `GET /api/apps` (it asks each app
 every app), so a new app added in the dashboard's `config.APPS` shows up in every menu with no change here. Nothing for an app to do:
 `Global.buildNav` adds it. How it stays cheap: the last answer is kept in this browser (`localStorage`, key `brassworks-apps`) and drawn
 at once, so the menu never waits on the network; it is refreshed in the background at most once a minute per browser tab; and the
-dashboard remembers each person's answer for up to five minutes (dropped at once when an administrator changes that person's access there), so opening pages does not ask every app every time. Cross-origin: the dashboard
+dashboard remembers each person's answer for up to a day (dropped at once when an administrator changes that person's access there), so opening pages does not ask every app every time. Cross-origin: the dashboard
 answers only the apps' own addresses, with the cookie (`credentials: "include"`). The dashboard's check carries `X-Brassworks-Probe: 1`,
 so an app does not count it as the person being there (`shared_python.probe`). A change of someone's access (the dashboard's People page, an approval, an app's own Users page, an
 in-app invite) makes the dashboard forget that person's answer at once (the apps tell it: `shared_python.access_events`), so the menu
-follows within about a minute (the browser's refresh). The list sits just above Refresh, which stays the last entry.
+follows within about a minute (the browser's refresh). If a menu ever looks wrong, an administrator can clear the remembered lists by hand: the dashboard's People page, "Refresh everyone's menus" (`POST /api/apps/forget`, optionally for one email). The list sits just above Refresh, which stays the last entry.
 
 ### Whole-row link (a row that opens its page)
 
