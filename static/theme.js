@@ -382,19 +382,86 @@
     return null;
   }
 
+  // Put `entries` at the end of a menu, just before the Refresh action when there is one (Refresh stays the very last thing).
+  function beforeRefresh(items, entries) {
+    if (!entries.length) return items;
+    const at = items.findIndex((item) => !item.href && item.label === "Refresh");
+    return at < 0 ? [...items, ...entries] : [...items.slice(0, at), ...entries, ...items.slice(at)];
+  }
+
   // Every app's menu ends with a way back to the dashboard (just before the Refresh action when there is one).
   function withDashboard(items) {
     const url = dashboardUrl();
     if (!url || items.some((item) => item.href === url)) return items;
-    const entry = { href: url, icon: "home", label: "Dashboard" };
-    const at = items.findIndex((item) => !item.href && item.label === "Refresh");
-    return at < 0 ? [...items, entry] : [...items.slice(0, at), entry, ...items.slice(at)];
+    return beforeRefresh(items, [{ href: url, icon: "home", label: "Dashboard" }]);
+  }
+
+  // The apps this person may open, at the bottom of every app's menu (group "Your apps"). The dashboard knows (it asks each app whether the
+  // person has an account) and answers GET /api/apps, so there is one place and an app that is added there appears everywhere. Asking costs
+  // the apps a call each, so: the last answer is kept in this browser and drawn at once (the menu never waits for the network), it is
+  // refreshed in the background at most once a minute, and the dashboard itself remembers an answer for a minute per person.
+  const APPS_KEY = "brassworks-apps";
+  const APPS_REFRESH_MS = 60 * 1000;
+  let navCall = null; // what the page last asked buildNav for, so the menu can be drawn again when the answer changes
+  let appsRefreshed = false;
+
+  // Where to ask: the dashboard's own address from an app, our own origin on the dashboard, nowhere on any other page.
+  function appsEndpoint() {
+    const onDashboard = location.hostname === "dashboard.evancooperman.com" || ((location.hostname === "localhost" || location.hostname === "127.0.0.1") && location.port === "8090");
+    if (onDashboard) return "/api/apps";
+    const home = dashboardUrl();
+    return home ? `${home}api/apps` : null;
+  }
+
+  function savedApps() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(APPS_KEY) || "null");
+      if (saved && Array.isArray(saved.apps)) return saved;
+    } catch (err) {
+      /* storage blocked or garbled: no apps until the answer arrives */
+    }
+    return { at: 0, apps: [] };
+  }
+
+  function saveApps(apps) {
+    try {
+      if (apps) localStorage.setItem(APPS_KEY, JSON.stringify({ at: Date.now(), apps }));
+      else localStorage.removeItem(APPS_KEY);
+    } catch (err) {
+      /* just not kept */
+    }
+  }
+
+  // The menu entries for the apps (not the one you are in: its own menu is the page's).
+  function appEntries() {
+    return savedApps().apps
+      .filter((app) => app && typeof app.url === "string" && /^https?:\/\//.test(app.url))
+      .filter((app) => { try { return new URL(app.url).host !== location.host; } catch (err) { return false; } })
+      .map((app) => ({ href: app.url, icon: app.icon || "home", label: app.name || app.key, group: "Your apps" }));
+  }
+
+  async function refreshApps() {
+    const url = appsEndpoint();
+    if (appsRefreshed || !url || !navCall) return;
+    appsRefreshed = true;
+    const before = JSON.stringify(savedApps().apps);
+    if (Date.now() - savedApps().at < APPS_REFRESH_MS) return;
+    try {
+      const response = await fetch(url, { credentials: "include", headers: { Accept: "application/json" } });
+      if (response.status === 401) saveApps(null); // signed out (or someone else on this browser): show none
+      else if (response.ok) saveApps((await response.json()).apps);
+      else return;
+    } catch (err) {
+      return; // the dashboard is not answering: keep what is shown
+    }
+    if (JSON.stringify(savedApps().apps) !== before) buildNav(...navCall); // the list changed: draw the menu again
   }
 
   function buildNav(items, mountId = "app-nav-mount", options = {}) {
     const mount = document.getElementById(mountId) || document.querySelector("nav.app-nav");
     if (!mount) return;
-    if (isV2()) items = withDashboard(items);
+    navCall = [items, mountId, options];
+    if (isV2()) items = beforeRefresh(withDashboard(items), appsEndpoint() ? appEntries() : []);
     const v2 = isV2();
     const barCount = v2 ? options.barItems ?? (items.length > 5 ? 4 : items.length) : items.length;
     const moreItems = barCount < items.length;
@@ -500,6 +567,7 @@
     mount.replaceWith(nav);
     if (typeof applyIcons === "function") applyIcons(nav);
     mountThemeToggle();
+    if (v2) refreshApps();
   }
 
   // Folds a row of buttons into one "..." menu, keeping only the main ones in
