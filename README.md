@@ -224,6 +224,16 @@ link. `.back-link` (theme.css) styles it; the icon is filled in like any `data-i
 Top-level pages (the sidebar's own entries) do not get one. If the parent depends on the page (a trip's
 agenda -> that trip), set the `href` from the page's script.
 
+### Whole-row link (a row that opens its page)
+
+A summary row that opens its own page when clicked (a trip under All trips) puts a transparent
+`<a class="row-link" href="...">` stretched over the row (`.item-summary.row-host`), so keyboard focus,
+middle-click and "open in new tab" all work. Anything in the row with its own job (an icon link, the
+expand arrow) carries `.row-above`; the arrow is a `<button class="row-chevron-btn row-above">` and
+is the only thing that expands the card. Styles: `.row-host`, `.row-link`, `.row-above`,
+`.row-chevron-btn` in theme.css. (Lists' index rows still use their own older copy of the same
+pattern, `.list-row` / `.list-row-link` / `.list-chevron-btn`.)
+
 Cache note: browsers hold theme.css/js and icons.js for a while - hard-refresh
 (Cmd+Shift+R) after deploying a change to them.
 

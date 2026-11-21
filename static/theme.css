@@ -757,6 +757,63 @@ label.checkbox-label input {
   color: var(--accent);
 }
 
+/* A summary row that is a link to its page as a whole (a trip under All trips). The link is
+   transparent and stretched over the row, so keyboard focus, middle/cmd-click and "open in new
+   tab" all work natively; anything inside the row that has its own job (the expand arrow, an
+   icon link) gets `.row-above` so its clicks never reach the stretched link. Markup:
+   <div class="item-summary row-host"><a class="row-link" href="..." aria-label="Open X"></a> ...
+     <a class="row-above" ...></a>
+     <button type="button" class="row-chevron-btn row-above" aria-expanded="false"><span class="item-chevron">...</span></button></div> */
+.row-host {
+  position: relative;
+  border-radius: inherit;
+}
+
+.row-host:hover {
+  background-color: var(--hover);
+}
+
+.row-link {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+
+.row-link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.row-above {
+  position: relative;
+  z-index: 1;
+}
+
+/* The expand arrow of such a row: a full-height strip at the right edge (the summary has 14px 16px
+   padding), an easy target now that it is the only thing that expands the card. */
+.row-chevron-btn {
+  display: flex;
+  align-items: center;
+  align-self: stretch;
+  flex-shrink: 0;
+  margin: -14px -16px -14px 0;
+  padding: 14px 16px 14px 10px;
+  background: none;
+  border: none;
+  border-radius: 0;
+  color: inherit;
+  cursor: pointer;
+}
+
+.row-chevron-btn:hover .item-chevron {
+  color: var(--accent);
+}
+
+.row-chevron-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
 .item-chevron {
   flex-shrink: 0;
   color: var(--muted);
