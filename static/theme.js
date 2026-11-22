@@ -457,11 +457,69 @@
     if (JSON.stringify(savedApps().apps) !== before) buildNav(...navCall); // the list changed: draw the menu again
   }
 
+  // Send feedback: a small form over the page that tells the administrator about a problem, an idea or a question. It posts to this app's own
+  // `/api/feedback` (shared_python.feedback_relay), which passes it on to the one inbox on the dashboard, so it needs nothing from the page:
+  // the app and the page (a path only) are what the administrator sees with it. Every v2 menu has a "Send feedback" entry that opens it, and
+  // `?feedback=1` on any page opens it too (so a link from elsewhere, like the Chrome extension, can).
+  const FEEDBACK_ID = "feedback-modal";
+  const FEEDBACK_KINDS = [["problem", "A problem"], ["idea", "An idea"], ["question", "A question"]];
+
+  function openFeedback() {
+    let overlay = document.getElementById(FEEDBACK_ID);
+    if (!overlay) {
+      const kind = el("select", { id: "feedback-kind", "aria-label": "What kind of message" }, FEEDBACK_KINDS.map(([value, label]) => el("option", { value, text: label })));
+      const body = el("textarea", { id: "feedback-body", rows: "6", maxlength: "4000", placeholder: "What happened, or what would you like?", "aria-label": "Your message" });
+      const status = el("p", { class: "field-hint", role: "status" });
+      const send = el("button", { type: "button", class: "save-btn", text: "Send" });
+      const cancel = el("button", { type: "button", class: "cancel-btn", text: "Cancel" });
+      const close = () => closeModal(FEEDBACK_ID);
+      send.addEventListener("click", async () => {
+        send.disabled = true;
+        status.textContent = "";
+        status.classList.remove("is-error");
+        try {
+          await fetchJSON("/api/feedback", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ kind: kind.value, body: body.value, page: location.pathname }),
+          });
+          body.value = "";
+          close();
+          showMessage("Thank you - your message was sent.", "success");
+        } catch (err) {
+          status.textContent = err.message;
+          status.classList.add("is-error");
+        }
+        send.disabled = false;
+      });
+      cancel.addEventListener("click", close);
+      overlay = el("div", { id: FEEDBACK_ID, class: "modal-overlay hidden", role: "dialog", "aria-modal": "true", "aria-label": "Send feedback" }, [
+        el("div", { class: "modal feedback-modal" }, [
+          el("h2", { text: "Send feedback" }),
+          el("p", { class: "field-hint", text: "Tell the administrator about a problem, an idea or a question. You will get a reply by email if one is needed." }),
+          kind,
+          body,
+          status,
+          el("div", { class: "modal-actions" }, [send, cancel]),
+        ]),
+      ]);
+      document.body.appendChild(overlay);
+      if (typeof applyIcons === "function") applyIcons(overlay);
+      iconifyButtons(overlay);
+    }
+    openModal(FEEDBACK_ID);
+    document.getElementById("feedback-body").focus();
+  }
+
+  function feedbackEntry(items) {
+    return items.some((item) => item.label === "Send feedback") ? [] : [{ icon: "mail", label: "Send feedback", onclick: openFeedback }];
+  }
+
   function buildNav(items, mountId = "app-nav-mount", options = {}) {
     const mount = document.getElementById(mountId) || document.querySelector("nav.app-nav");
     if (!mount) return;
     navCall = [items, mountId, options];
-    if (isV2()) items = beforeRefresh(withDashboard(items), appsEndpoint() ? appEntries() : []);
+    if (isV2()) items = beforeRefresh(withDashboard(items), [...feedbackEntry(items), ...(appsEndpoint() ? appEntries() : [])]);
     const v2 = isV2();
     const barCount = v2 ? options.barItems ?? (items.length > 5 ? 4 : items.length) : items.length;
     const moreItems = barCount < items.length;
@@ -1327,6 +1385,10 @@
   if (document.documentElement.getAttribute("data-ui") === "v2") {
     const start = () => {
       mountLogo();
+      if (new URLSearchParams(location.search).get("feedback") === "1") {
+        openFeedback();
+        history.replaceState(null, "", location.pathname + location.hash); // so a reload does not open it again
+      }
       iconifyButtons();
       new MutationObserver((mutations) => {
         for (const m of mutations) {
@@ -1527,6 +1589,7 @@
     formatDateBadge,
     openModal,
     closeModal,
+    openFeedback,
     buildNav,
     buildMultiSelect,
     buildMenu,

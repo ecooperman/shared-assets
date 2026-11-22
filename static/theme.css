@@ -2023,3 +2023,20 @@ html[data-ui="v2"] .app-nav .app-nav-group-repeat {
   margin: 4px 0;
   background: var(--border);
 }
+
+/* --- the Send feedback form that opens over any page (Global.openFeedback, theme.js) --- */
+
+.feedback-modal {
+  width: 440px;
+}
+
+.feedback-modal select,
+.feedback-modal textarea {
+  display: block;
+  width: 100%;
+  margin: 8px 0;
+}
+
+.feedback-modal textarea {
+  resize: vertical;
+}

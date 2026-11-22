@@ -237,6 +237,14 @@ so an app does not count it as the person being there (`shared_python.probe`). A
 in-app invite) makes the dashboard forget that person's answer at once (the apps tell it: `shared_python.access_events`), so the menu
 follows within about a minute (the browser's refresh). If a menu ever looks wrong, an administrator can clear the remembered lists by hand: the dashboard's People page, "Refresh everyone's menus" (`POST /api/apps/forget`, optionally for one email). The list sits just above Refresh, which stays the last entry.
 
+### Send feedback (in every menu)
+
+Every v2 menu has a "Send feedback" entry (before the apps list) that opens one small form over the page: a kind (a problem, an idea or a
+question) and a message. `Global.openFeedback()` opens it from anywhere, and `?feedback=1` on any page opens it on load (so a link from
+the Chrome extension can). It posts to the app's own `POST /api/feedback` (`shared_python.feedback_relay`), which passes it to the one
+inbox on the dashboard, separated by app; the app and the page (a path only) go with it. An app that already has its own menu item labelled
+"Send feedback" keeps it and does not get a second. Nothing for an app to do beyond `feedback_relay.install` in its `main.py`.
+
 ### Whole-row link (a row that opens its page)
 
 A summary row that opens its own page when clicked (a trip under All trips) puts a transparent
