@@ -1591,6 +1591,7 @@
     openModal,
     closeModal,
     openFeedback,
+    dashboardUrl, // where the Brassworks dashboard is from this page (null on the dashboard itself)
     buildNav,
     buildMultiSelect,
     buildMenu,
