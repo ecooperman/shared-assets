@@ -1409,9 +1409,10 @@
   // narrows the list by any of the three (starts-with first). Keyboard: Up/Down move, Enter picks (only once one is highlighted,
   // so Enter in the box still does what it did), Escape or Tab closes. Mouse and touch: click or tap a row. The list floats
   // above the page (so no card or modal clips it) and flips above the box when there is no room below. `onPick(item)` runs after
-  // the box is filled. Returns {close}. Styles: `.suggest-*` in theme.css.
+  // the box is filled. `avatar: false` leaves out the round initial before each row (right for people, not for cities). Returns {close}.
+  // Styles: `.suggest-*` in theme.css.
   let suggestLists = 0;
-  function suggest(input, { items, onPick = () => {}, limit = 8 }) {
+  function suggest(input, { items, onPick = () => {}, limit = 8, avatar = true }) {
     const id = `suggest-${++suggestLists}`;
     let list = null;
     let shown = [];
@@ -1500,7 +1501,7 @@
         ...shown.map((item, i) => {
           const title = item.title || item.value;
           const row = el("div", { class: "suggest-option", role: "option", id: `${id}-${i}`, "aria-selected": "false" }, [
-            el("span", { class: "suggest-avatar", "aria-hidden": "true", text: (title.trim()[0] || "?").toUpperCase() }),
+            ...(avatar ? [el("span", { class: "suggest-avatar", "aria-hidden": "true", text: (title.trim()[0] || "?").toUpperCase() })] : []),
             el("span", { class: "suggest-text" }, [
               el("span", { class: "suggest-title", text: title }),
               ...(item.detail ? [el("span", { class: "suggest-detail", text: item.detail })] : []),

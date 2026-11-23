@@ -8,7 +8,7 @@
 //   GET/POST  {api}/members          PATCH/DELETE {api}/members/{user_id}
 //   GET/POST  {api}/invites          DELETE       {api}/invites/{id}
 // and GET /api/me (for how many invites are left) and GET /api/me/people (the
-// addresses to suggest in the box - a list of emails). It builds its own markup (no
+// people to suggest in the box, as {email, name}: administrators only, an ordinary person gets an empty list). It builds its own markup (no
 // element ids, so many can be on one page) and shows what went wrong right
 // under the box, where the person is looking. Styles are in theme.css.
 //
@@ -35,8 +35,8 @@ const Access = (() => {
     const memberList = Global.el("div", { class: "member-list" });
     const inviteList = Global.el("div", { class: "member-list" });
 
-    // Suggestions for the box: people this person has shared with or asked for
-    // before (the server decides who), minus anyone already on this thing.
+    // Suggestions for the box: whoever the server offers (everyone for an administrator, nobody for an ordinary person), minus anyone
+    // already on this thing.
     // (The dropdown asks for the list each time it opens, so it is always current.) The server may send bare addresses or
     // {email, name}; a name is shown with the address.
     let people = [];
