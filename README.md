@@ -47,7 +47,7 @@ python -m app.main
 
 Then open http://127.0.0.1:8070 (host/port are set in `app/config.py`). No
 database, no `alembic upgrade head` - this app is just three static files
-behind a `no-store` cache header, see the table above.
+behind one cache rule (`shared_python.pages.install_cache_headers`): `no-store`, except a file asked for with `?v=<hash>` (the address every app page uses, built by `shared_asset('theme.js')`), which the browser keeps for a year. A changed file gets a new address, so nothing is stale. It needs `shared-python` installed (`-e ../shared-python` in requirements.txt).
 
 ## Why this exists
 

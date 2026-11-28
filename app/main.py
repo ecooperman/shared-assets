@@ -1,8 +1,9 @@
 import subprocess
 from pathlib import Path
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
+from shared_python import pages
 
 # No database, no Alembic - this app has nothing but static files
 # (theme.css/theme.js/icons.js) shared across the rest of the fleet. See
@@ -35,20 +36,10 @@ def get_version():
     return {"version": GIT_SHA}
 
 
-@app.middleware("http")
-async def no_cache(request: Request, call_next):
-    """Never let the browser serve a stale copy - matters more here than
-    anywhere else in the fleet, since 100% of this app's traffic is
-    cacheable-by-extension static assets (theme.css/theme.js/icons.js). This
-    header alone isn't enough once Cloudflare's edge is in front of it - see
-    DEPLOYMENT.md's Cache Rule bypass step, required for this hostname too.
-    `no-store` (not `no-cache`) is deliberate: `no-cache` still permits
-    caching as long as the cache revalidates first, which isn't guaranteed;
-    `no-store` is the only unambiguous "never cache this, anywhere" signal.
-    """
-    response = await call_next(request)
-    response.headers["Cache-Control"] = "no-store"
-    return response
+# `Cache-Control` for everything: `no-store`, except a script/stylesheet/image asked for with `?v=<hash>` (the address every app page uses, see
+# shared_python/pages.py), which the browser keeps for a year. The address changes whenever the file does, so nothing is ever stale. Cloudflare's
+# edge still bypasses the cache for this hostname (DEPLOYMENT.md, Cache Rule step).
+pages.install_cache_headers(app)
 
 
 app.mount("/", StaticFiles(directory="static", html=True), name="static")
