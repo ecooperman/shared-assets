@@ -189,6 +189,12 @@ What an opted-in page gets:
   `theme.js` when the theme changes. A page's own fixed `theme-color` is overridden, so apps need
   not carry one (and should not: a fixed light colour is what made dark mode hard to read).
 
+### Disabled buttons
+
+`button:disabled` is styled once in `theme.css` (faded to 55%, a "progress" cursor, no hover brightening), so a Save or Add that is busy
+or not allowed looks it in every app. An app's own more specific `:disabled` rule (the resume builder's, `.icon-btn`, `.schedule-btn`) still wins.
+Checkboxes and selects keep their own handling.
+
 ### Icons on buttons (the rule)
 
 Every action button carries **one line icon from `icons.js`** in front of its label - never an

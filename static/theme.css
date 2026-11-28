@@ -542,6 +542,17 @@ button {
   font-weight: 500;
 }
 
+/* A button that cannot be pressed right now (busy saving, or not allowed) looks it, in every app: faded, no hover brightening, and a
+   "working" cursor so a slow save is visibly in progress. An app's own :disabled rule (more specific) still wins. */
+button:disabled {
+  opacity: 0.55;
+  cursor: progress;
+}
+
+button:disabled:hover {
+  filter: none;
+}
+
 button:focus-visible,
 a:focus-visible,
 input:focus-visible,
